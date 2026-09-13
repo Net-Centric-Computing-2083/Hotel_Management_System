@@ -1,21 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace HotelManagementSystem.Models;
-
-public partial class Room
+namespace HotelManagementSystem.Models
 {
-    public int Id { get; set; }
+    public class Room
+    {
+        [Key]
+        public int RoomId { get; set; }
 
-    public string RoomNumber { get; set; } = null!;
+        [Required]
+        public string? RoomNumber { get; set; }
 
-    public int RoomTypeId { get; set; }
+        public int RoomTypeId { get; set; }
 
-    public decimal PricePerNight { get; set; }
+        public RoomType? RoomType { get; set; }
 
-    public bool IsAvailable { get; set; }
+        public decimal Price { get; set; }
 
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public bool IsAvailable { get; set; } = true;
 
-    public virtual RoomType RoomType { get; set; } = null!;
+        public string Status { get; set; } = "Available";
+    }
 }

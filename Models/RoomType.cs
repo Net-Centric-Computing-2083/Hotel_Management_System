@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace HotelManagementSystem.Models;
-
-public partial class RoomType
+namespace HotelManagementSystem.Models
 {
-    public int Id { get; set; }
+    public class RoomType
+    {
+        [Key]
+        public int RoomTypeId { get; set; }
 
-    public string TypeName { get; set; } = null!;
+        [Required]
+        public string? Name { get; set; }
 
-    public int Capacity { get; set; }
+        public decimal BasePrice { get; set; }
 
-    public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
+        public List<Room>? Rooms { get; set; }
+    }
 }
