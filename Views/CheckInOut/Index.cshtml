@@ -1,2 +1,227 @@
-@{ ViewData["Title"] = "View"; }
-<h2>View is Ready</h2>
+@{
+    ViewData["Title"] = "Check-In / Check-Out";
+}
+
+<div class="container py-4">
+
+    <h2 class="text-primary mb-4">
+        Front Desk Operations
+    </h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="row">
+
+        <!-- CHECK-IN -->
+        <div class="col-md-6 mb-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        Pending Check-Ins
+                    </h5>
+                </div>
+
+                <div class="card-body p-0">
+
+                    @{
+                        var pending =
+                            ViewBag.PendingCheckIns
+                            as IEnumerable<dynamic>;
+                    }
+
+                    @if (ViewBag.PendingCheckIns != null &&
+                         ViewBag.PendingCheckIns.Count > 0)
+                    {
+                        <div class="table-responsive">
+
+                            <table class="table table-hover mb-0">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Room</th>
+                                        <th>Date</th>
+                                        <th></th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @foreach (var booking
+                                        in ViewBag.PendingCheckIns)
+                                    {
+                                        <tr>
+
+                                            <td>
+                                                @booking.Customer?.FullName
+                                            </td>
+
+                                            <td>
+                                                Room
+                                                @booking.Room?.RoomNumber
+                                            </td>
+
+                                            <td>
+                                                @booking.CheckInDate
+                                                    .ToString("yyyy-MM-dd")
+                                            </td>
+
+                                            <td>
+
+                                                <form asp-action="ProcessCheckIn"
+                                                      method="post">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="bookingId"
+                                                           value="@booking.Id" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-success btn-sm">
+                                                        Check-In
+                                                    </button>
+
+                                                </form>
+
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            No pending check-ins.
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- CHECK-OUT -->
+        <div class="col-md-6 mb-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        Current Guests
+                    </h5>
+                </div>
+
+                <div class="card-body p-0">
+
+                    @if (ViewBag.ActiveCheckIns != null &&
+                         ViewBag.ActiveCheckIns.Count > 0)
+                    {
+                        <div class="table-responsive">
+
+                            <table class="table table-hover mb-0">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Room</th>
+                                        <th>Check-Out</th>
+                                        <th></th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @foreach (var checkIn
+                                        in ViewBag.ActiveCheckIns)
+                                    {
+                                        <tr>
+
+                                            <td>
+                                                @checkIn.Booking
+                                                    ?.Customer?.FullName
+                                            </td>
+
+                                            <td>
+                                                Room
+                                                @checkIn.Booking
+                                                    ?.Room?.RoomNumber
+                                            </td>
+
+                                            <td>
+                                                @checkIn.Booking
+                                                    ?.CheckOutDate
+                                                    .ToString("yyyy-MM-dd")
+                                            </td>
+
+                                            <td>
+
+                                                <form asp-action="ProcessCheckOut"
+                                                      method="post">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="checkInId"
+                                                           value="@checkIn.Id" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-danger btn-sm"
+                                                            onclick="return confirm('Process check-out and generate bill?');">
+                                                        Check-Out & Bill
+                                                    </button>
+
+                                                </form>
+
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            No active guests.
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

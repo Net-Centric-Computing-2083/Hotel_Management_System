@@ -1,0 +1,170 @@
+﻿@model HotelManagementSystem.Models.Booking
+
+@{
+    ViewData["Title"] = "Create Booking";
+}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-8">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        Create New Booking
+                    </h4>
+                </div>
+
+                <div class="card-body">
+
+                    <form asp-action="Create" method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3">
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label asp-for="CustomerId"
+                                   class="form-label">
+                                Customer
+                            </label>
+
+                            <select asp-for="CustomerId"
+                                    class="form-select"
+                                    required>
+
+                                <option value="">
+                                    -- Select Customer --
+                                </option>
+
+                                @foreach (var customer in ViewBag.Customers)
+                                {
+                                    <option value="@customer.Id">
+                                        @customer.FullName
+                                        - @customer.PhoneNumber
+                                    </option>
+                                }
+
+                            </select>
+
+                            <span asp-validation-for="CustomerId"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label asp-for="RoomId"
+                                   class="form-label">
+                                Room
+                            </label>
+
+                            <select asp-for="RoomId"
+                                    class="form-select"
+                                    required>
+
+                                <option value="">
+                                    -- Select Room --
+                                </option>
+
+                                @foreach (var room in ViewBag.Rooms)
+                                {
+                                    <option value="@room.Id">
+                                        Room @room.RoomNumber -
+                                        @room.RoomType?.TypeName -
+                                        Rs. @room.RoomType?.PricePerNight/night
+                                    </option>
+                                }
+
+                            </select>
+
+                            <span asp-validation-for="RoomId"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label asp-for="CheckInDate"
+                                       class="form-label">
+                                    Check-In Date
+                                </label>
+
+                                <input asp-for="CheckInDate"
+                                       type="date"
+                                       class="form-control"
+                                       required />
+
+                                <span asp-validation-for="CheckInDate"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label asp-for="CheckOutDate"
+                                       class="form-label">
+                                    Check-Out Date
+                                </label>
+
+                                <input asp-for="CheckOutDate"
+                                       type="date"
+                                       class="form-control"
+                                       required />
+
+                                <span asp-validation-for="CheckOutDate"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="alert alert-info">
+                            The system will automatically check
+                            room availability and prevent double booking.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+
+                            <a asp-action="Index"
+                               class="btn btn-secondary">
+                                Cancel
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Confirm Booking
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync(
+            "_ValidationScriptsPartial");
+    }
+}
