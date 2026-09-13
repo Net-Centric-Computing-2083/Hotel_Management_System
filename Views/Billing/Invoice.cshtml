@@ -1,2 +1,183 @@
-@{ ViewData["Title"] = "View"; }
-<h2>View is Ready</h2>
+@model HotelManagementSystem.Models.Bill
+
+@{
+    ViewData["Title"] = "Invoice";
+}
+
+<div class="container py-5">
+
+    <div class="card shadow border-0">
+
+        <div class="card-body p-5">
+
+            <div class="row border-bottom pb-4 mb-4">
+
+                <div class="col-md-7">
+
+                    <h2 class="text-primary fw-bold">
+                        HOTEL MANAGEMENT SYSTEM
+                    </h2>
+
+                    <p class="text-muted mb-0">
+                        Official Bill & Receipt
+                    </p>
+
+                </div>
+
+                <div class="col-md-5 text-md-end">
+
+                    <h4>
+                        INVOICE #INV-@Model.Id
+                    </h4>
+
+                    <p class="text-muted">
+                        @Model.PaymentDate.ToString("MMMM dd, yyyy")
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="row mb-4">
+
+                <div class="col-md-6">
+
+                    <h6 class="text-muted text-uppercase">
+                        Billed To
+                    </h6>
+
+                    <p class="mb-1">
+                        <strong>
+                            @Model.Booking?.Customer?.FullName
+                        </strong>
+                    </p>
+
+                    <p class="mb-1">
+                        Phone:
+                        @Model.Booking?.Customer?.PhoneNumber
+                    </p>
+
+                    <p>
+                        Email:
+                        @Model.Booking?.Customer?.Email
+                    </p>
+
+                </div>
+
+                <div class="col-md-6 text-md-end">
+
+                    <h6 class="text-muted text-uppercase">
+                        Stay Details
+                    </h6>
+
+                    <p class="mb-1">
+                        Room:
+                        <strong>
+                            @Model.Booking?.Room?.RoomNumber
+                        </strong>
+                    </p>
+
+                    <p class="mb-1">
+                        Check-In:
+                        @Model.Booking?.CheckInDate.ToString("yyyy-MM-dd")
+                    </p>
+
+                    <p>
+                        Check-Out:
+                        @Model.Booking?.CheckOutDate.ToString("yyyy-MM-dd")
+                    </p>
+
+                </div>
+
+            </div>
+
+            <table class="table table-bordered">
+
+                <thead class="table-light">
+
+                    <tr>
+                        <th>Description</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td>Room Charges</td>
+                        <td class="text-end">
+                            Rs. @Model.RoomCharge.ToString("N2")
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>Additional Charges</td>
+                        <td class="text-end">
+                            Rs. @Model.AdditionalCharge.ToString("N2")
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>Tax</td>
+                        <td class="text-end">
+                            Rs. @Model.Tax.ToString("N2")
+                        </td>
+                    </tr>
+
+                    <tr class="table-light">
+
+                        <td>
+                            <strong>Grand Total</strong>
+                        </td>
+
+                        <td class="text-end">
+
+                            <strong class="text-success fs-5">
+                                Rs. @Model.TotalAmount.ToString("N2")
+                            </strong>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+            <div class="mt-4">
+
+                @if (Model.IsPaid)
+                {
+                    <span class="badge bg-success fs-6">
+                        PAID
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark fs-6">
+                        UNPAID
+                    </span>
+                }
+
+            </div>
+
+            <div class="d-flex justify-content-between mt-5">
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    Back
+                </a>
+
+                <button onclick="window.print()"
+                        class="btn btn-primary">
+                    Print Invoice
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
