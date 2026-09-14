@@ -4,67 +4,210 @@
     ViewData["Title"] = "Rooms";
 }
 
-<h1>Rooms</h1>
+<div class="hotel-page">
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["Success"]
+    <!-- Header -->
+    <div class="page-header">
+
+        <div>
+            <p class="page-eyebrow">ROOM MANAGEMENT</p>
+
+            <h1>Rooms</h1>
+
+            <p class="page-description">
+                Manage rooms, prices and availability.
+            </p>
+        </div>
+
+        <div class="page-actions">
+
+            <a asp-action="Create"
+               class="hotel-btn hotel-btn-primary">
+                <span>+</span>
+                Add Room
+            </a>
+
+        </div>
+
     </div>
-}
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">+ Add New Room</a>
-</p>
 
-<table class="table table-striped table-hover align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>Room Number</th>
-            <th>Room Type</th>
-            <th>Price</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
+    <!-- Room Summary -->
+    <div class="room-summary">
 
-    <tbody>
-        @foreach (var room in Model)
+        <div class="room-summary-card">
+            <span class="summary-icon">🛏️</span>
+
+            <div>
+                <span>Total Rooms</span>
+
+                <strong>
+                    @Model.Count()
+                </strong>
+            </div>
+        </div>
+
+
+        <div class="room-summary-card">
+            <span class="summary-icon available">✓</span>
+
+            <div>
+                <span>Available</span>
+
+                <strong>
+                    @Model.Count(r => r.IsAvailable)
+                </strong>
+            </div>
+        </div>
+
+
+        <div class="room-summary-card">
+            <span class="summary-icon occupied">●</span>
+
+            <div>
+                <span>Occupied</span>
+
+                <strong>
+                    @Model.Count(r => !r.IsAvailable)
+                </strong>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Rooms -->
+    <div class="rooms-panel">
+
+        <div class="rooms-panel-header">
+
+            <div>
+                <h3>All Rooms</h3>
+
+                <p>
+                    @Model.Count() rooms registered
+                </p>
+            </div>
+
+        </div>
+
+
+        @if (Model == null || !Model.Any())
         {
-            <tr>
-                <td>@room.RoomNumber</td>
+            <div class="empty-state">
 
-                <td>@room.RoomType?.Name</td>
+                <div class="empty-state-icon">
+                    🛏️
+                </div>
 
-                <td>
-                    Rs. @room.Price.ToString("N2")
-                </td>
+                <h3>No rooms yet</h3>
 
-                <td>
-                    @if (room.IsAvailable)
-                    {
-                        <span class="badge bg-success">Available</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Occupied</span>
-                    }
-                </td>
+                <p>
+                    Add your first hotel room to get started.
+                </p>
 
-                <td>
-                    <a asp-action="Edit"
-                       asp-route-id="@room.RoomId"
-                       class="btn btn-sm btn-outline-secondary">
-                        Edit
-                    </a>
+                <a asp-action="Create"
+                   class="hotel-btn hotel-btn-primary">
+                    Add First Room
+                </a>
 
-                    <a asp-action="Delete"
-                       asp-route-id="@room.RoomId"
-                       class="btn btn-sm btn-outline-danger">
-                        Delete
-                    </a>
-                </td>
-            </tr>
+            </div>
         }
-    </tbody>
-</table>
+        else
+        {
+            <div class="rooms-grid">
+
+                @foreach (var room in Model)
+                {
+                    <div class="room-card">
+
+                        <div class="room-card-top">
+
+                            <div class="room-number">
+                                @room.RoomNumber
+                            </div>
+
+                            @if (room.IsAvailable)
+                            {
+                                <span class="room-status available">
+                                    Available
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="room-status occupied">
+                                    Occupied
+                                </span>
+                            }
+
+                        </div>
+
+
+                        <div class="room-card-body">
+
+                            <span class="room-type-label">
+                                ROOM TYPE
+                            </span>
+
+                            <h3>
+                                @(room.RoomType?.Name ?? "N/A")
+                            </h3>
+
+
+                            <div class="room-info">
+
+                                <div>
+                                    <span>Capacity</span>
+
+                                    <strong>
+                                        @(room.RoomType?.Capacity ?? 0)
+                                        Guests
+                                    </strong>
+                                </div>
+
+
+                                <div>
+                                    <span>Price</span>
+
+                                    <strong>
+                                        Rs. @room.Price.ToString("N2")
+                                        <small>/night</small>
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="room-card-footer">
+
+                            <a asp-action="Details"
+                               asp-route-id="@room.RoomId"
+                               class="room-action">
+                                View
+                            </a>
+
+                            <a asp-action="Edit"
+                               asp-route-id="@room.RoomId"
+                               class="room-action">
+                                Edit
+                            </a>
+
+                            <a asp-action="Delete"
+                               asp-route-id="@room.RoomId"
+                               class="room-action room-action-danger">
+                                Delete
+                            </a>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>

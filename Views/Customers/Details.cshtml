@@ -1,2 +1,228 @@
-@{ ViewData["Title"] = "View"; }
-<h2>View is Ready</h2>
+@model HotelManagementSystem.Models.Customer
+
+@{
+    ViewData["Title"] = "Customer Details";
+}
+
+<div class="hotel-page">
+
+    <div class="page-header">
+
+        <div>
+            <p class="page-eyebrow">CUSTOMER MANAGEMENT</p>
+
+            <h1>Customer Details</h1>
+
+            <p class="page-description">
+                View customer information and booking history.
+            </p>
+        </div>
+
+        <div class="page-actions">
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="hotel-btn hotel-btn-primary">
+                Edit Customer
+            </a>
+
+            <a asp-action="Index"
+               class="hotel-btn hotel-btn-secondary">
+                ← Back
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="customer-details-panel">
+
+        <!-- Profile Header -->
+
+        <div class="customer-details-header">
+
+            <div class="customer-details-avatar">
+                @Model.FullName.Substring(0, 1).ToUpper()
+            </div>
+
+            <div>
+
+                <p class="customer-details-label">
+                    CUSTOMER #@Model.Id
+                </p>
+
+                <h2>
+                    @Model.FullName
+                </h2>
+
+                <span>
+                    Registered Hotel Guest
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Information -->
+
+        <div class="customer-details-grid">
+
+            <div class="customer-detail-item">
+
+                <span class="customer-detail-label">
+                    Full Name
+                </span>
+
+                <strong>
+                    @Model.FullName
+                </strong>
+
+            </div>
+
+
+            <div class="customer-detail-item">
+
+                <span class="customer-detail-label">
+                    Phone Number
+                </span>
+
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.Phone)
+                        ? "Not provided"
+                        : Model.Phone)
+                </strong>
+
+            </div>
+
+
+            <div class="customer-detail-item">
+
+                <span class="customer-detail-label">
+                    Email Address
+                </span>
+
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.Email)
+                        ? "Not provided"
+                        : Model.Email)
+                </strong>
+
+            </div>
+
+
+            <div class="customer-detail-item">
+
+                <span class="customer-detail-label">
+                    Address
+                </span>
+
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.Address)
+                        ? "Not provided"
+                        : Model.Address)
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- Bookings -->
+
+        <div class="customer-bookings-section">
+
+            <div class="customer-section-title">
+
+                <div>
+                    <h3>Booking Information</h3>
+
+                    <p>
+                        @Model.Bookings.Count booking(s) associated
+                        with this customer.
+                    </p>
+                </div>
+
+            </div>
+
+            @if (Model.Bookings != null && Model.Bookings.Any())
+            {
+                <div class="customer-booking-list">
+
+                    @foreach (var booking in Model.Bookings)
+                    {
+                        <div class="customer-booking-item">
+
+                            <div>
+                                <span>Booking</span>
+                                <strong>#@booking.Id</strong>
+                            </div>
+
+                            <div>
+                                <span>Check-In</span>
+                                <strong>
+                                    @booking.CheckInDate.ToString("dd MMM yyyy")
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Check-Out</span>
+                                <strong>
+                                    @booking.CheckOutDate.ToString("dd MMM yyyy")
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Room</span>
+                                <strong>
+                                    @(booking.Room?.RoomNumber ?? "N/A")
+                                </strong>
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+            }
+            else
+            {
+                <div class="customer-no-bookings">
+
+                    <div>
+                        📅
+                    </div>
+
+                    <h4>No bookings yet</h4>
+
+                    <p>
+                        This customer does not have any bookings.
+                    </p>
+
+                </div>
+            }
+
+        </div>
+
+
+        <!-- Footer Actions -->
+
+        <div class="customer-details-footer">
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="hotel-btn hotel-btn-primary">
+                Edit Customer
+            </a>
+
+            <a asp-action="Delete"
+               asp-route-id="@Model.Id"
+               class="hotel-btn hotel-btn-danger">
+                Delete Customer
+            </a>
+
+        </div>
+
+    </div>
+
+</div>

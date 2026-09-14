@@ -1,0 +1,219 @@
+@model HotelManagementSystem.Models.RoomType
+
+@{
+    ViewData["Title"] = "Room Type Details";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between
+        align-items-center mb-4">
+
+        <div>
+
+            <h1 class="fw-bold">
+                @Model.Name
+            </h1>
+
+            <p class="text-muted mb-0">
+                Room type details
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.RoomTypeId"
+               class="btn btn-primary">
+                Edit
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-outline-secondary">
+                Back
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- Information -->
+
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <div class="text-center mb-4">
+
+                        <div class="display-3">
+                            🛏️
+                        </div>
+
+                        <h3 class="fw-bold mt-3">
+                            @Model.Name
+                        </h3>
+
+                    </div>
+
+
+                    <div class="row text-center">
+
+                        <div class="col-6">
+
+                            <div class="text-muted">
+                                Capacity
+                            </div>
+
+                            <h4 class="fw-bold">
+                                @Model.Capacity
+                            </h4>
+
+                            <small>
+                                Guests
+                            </small>
+
+                        </div>
+
+
+                        <div class="col-6">
+
+                            <div class="text-muted">
+                                Total Rooms
+                            </div>
+
+                            <h4 class="fw-bold">
+
+                                @(Model.Rooms?.Count ?? 0)
+
+                            </h4>
+
+                            <small>
+                                Rooms
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Rooms -->
+
+        <div class="col-lg-7">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white p-4">
+
+                    <h5 class="fw-bold mb-0">
+                        Rooms in this category
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body p-0">
+
+                    @if (Model.Rooms == null ||
+                         !Model.Rooms.Any())
+                    {
+                        <div class="text-center
+                            text-muted
+                            py-5">
+
+                            No rooms have been assigned
+                            to this room type.
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+
+                            <table class="table
+                                table-hover
+                                align-middle
+                                mb-0">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Room
+                                        </th>
+
+                                        <th>
+                                            Price / Night
+                                        </th>
+
+                                        <th>
+                                            Status
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @foreach (var room in Model.Rooms)
+                                    {
+                                        <tr>
+
+                                            <td class="fw-semibold">
+                                                @room.RoomNumber
+                                            </td>
+
+                                            <td>
+                                                Rs.
+                                                @room.Price.ToString("N2")
+                                            </td>
+
+                                            <td>
+
+                                                @if (room.IsAvailable)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        Available
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">
+                                                        Unavailable
+                                                    </span>
+                                                }
+
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

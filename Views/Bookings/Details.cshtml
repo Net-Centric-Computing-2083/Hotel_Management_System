@@ -1,0 +1,312 @@
+@model HotelManagementSystem.Models.Booking
+
+@{
+    ViewData["Title"] = "Booking Details";
+}
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <div class="text-primary fw-semibold small text-uppercase">
+                Booking Management
+            </div>
+
+            <h2 class="fw-bold mb-1">
+                Booking Details
+            </h2>
+
+            <p class="text-muted mb-0">
+                View complete information about this reservation.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-outline-secondary">
+            ← Back to Bookings
+        </a>
+
+    </div>
+
+
+    <!-- BOOKING INFORMATION -->
+    <div class="row g-4">
+
+        <!-- Guest Information -->
+        <div class="col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">
+                        Guest Information
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <div class="text-muted small">
+                            Guest Name
+                        </div>
+
+                        <div class="fs-5 fw-semibold">
+                            @Model.Customer?.FullName
+                        </div>
+                    </div>
+
+
+                    <div class="mb-3">
+                        <div class="text-muted small">
+                            Phone
+                        </div>
+
+                        <div>
+                            @(Model.Customer?.Phone ?? "Not provided")
+                        </div>
+                    </div>
+
+
+                    <div class="mb-3">
+                        <div class="text-muted small">
+                            Email
+                        </div>
+
+                        <div>
+                            @(Model.Customer?.Email ?? "Not provided")
+                        </div>
+                    </div>
+
+
+                    <div>
+                        <div class="text-muted small">
+                            Address
+                        </div>
+
+                        <div>
+                            @(Model.Customer?.Address ?? "Not provided")
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Room Information -->
+        <div class="col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="mb-0">
+                        Room Information
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <div class="text-muted small">
+                            Room Number
+                        </div>
+
+                        <div class="fs-5 fw-semibold">
+                            Room @Model.Room?.RoomNumber
+                        </div>
+                    </div>
+
+
+                    <div class="mb-3">
+                        <div class="text-muted small">
+                            Room Type
+                        </div>
+
+                        <div>
+                            @(Model.Room?.RoomType?.Name ?? "Not specified")
+                        </div>
+                    </div>
+
+
+                    <div class="mb-3">
+                        <div class="text-muted small">
+                            Price Per Night
+                        </div>
+
+                        <div>
+                            Rs. @(Model.Room?.Price.ToString("N2") ?? "0.00")
+                        </div>
+                    </div>
+
+
+                    <div>
+                        <div class="text-muted small">
+                            Room Status
+                        </div>
+
+                        @if (Model.Room?.IsAvailable == true)
+                        {
+                            <span class="badge bg-success">
+                                Available
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">
+                                Occupied
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Booking Information -->
+        <div class="col-12">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="mb-0">
+                        Reservation Information
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row g-4">
+
+                        <!-- Booking ID -->
+                        <div class="col-md-3">
+
+                            <div class="text-muted small">
+                                Booking ID
+                            </div>
+
+                            <div class="fw-semibold">
+                                #@Model.Id
+                            </div>
+
+                        </div>
+
+
+                        <!-- Booking Date -->
+                        <div class="col-md-3">
+
+                            <div class="text-muted small">
+                                Booking Date
+                            </div>
+
+                            <div class="fw-semibold">
+                                @Model.BookingDate.ToString("dd MMM yyyy, hh:mm tt")
+                            </div>
+
+                        </div>
+
+
+                        <!-- Check In -->
+                        <div class="col-md-3">
+
+                            <div class="text-muted small">
+                                Check-In Date
+                            </div>
+
+                            <div class="fw-semibold">
+                                @Model.CheckInDate.ToString("dd MMM yyyy")
+                            </div>
+
+                        </div>
+
+
+                        <!-- Check Out -->
+                        <div class="col-md-3">
+
+                            <div class="text-muted small">
+                                Check-Out Date
+                            </div>
+
+                            <div class="fw-semibold">
+                                @Model.CheckOutDate.ToString("dd MMM yyyy")
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- STATUS -->
+        <div class="col-12">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Booking Status
+                            </div>
+
+                            @if (Model.CheckIn?.CheckOut != null)
+                            {
+                                <span class="badge bg-secondary fs-6">
+                                    Checked Out
+                                </span>
+                            }
+                            else if (Model.CheckIn != null)
+                            {
+                                <span class="badge bg-success fs-6">
+                                    Checked In
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary fs-6">
+                                    Confirmed / Pending Check-In
+                                </span>
+                            }
+                        </div>
+
+
+                        <div class="d-flex gap-2">
+
+                            <a asp-action="Edit"
+                               asp-route-id="@Model.Id"
+                               class="btn btn-warning">
+                                Edit Booking
+                            </a>
+
+                            <a asp-action="Index"
+                               class="btn btn-outline-secondary">
+                                Back
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

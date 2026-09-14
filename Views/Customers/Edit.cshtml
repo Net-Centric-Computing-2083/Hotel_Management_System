@@ -1,7 +1,7 @@
 @model HotelManagementSystem.Models.Customer
 
 @{
-    ViewData["Title"] = "Add Customer";
+    ViewData["Title"] = "Edit Customer";
 }
 
 <div class="hotel-page">
@@ -9,9 +9,9 @@
     <div class="page-header">
         <div>
             <p class="page-eyebrow">CUSTOMER MANAGEMENT</p>
-            <h1>Add Customer</h1>
+            <h1>Edit Customer</h1>
             <p class="page-description">
-                Register a new hotel guest.
+                Update customer information.
             </p>
         </div>
 
@@ -26,17 +26,24 @@
     <div class="customer-form-panel">
 
         <div class="customer-form-header">
+
             <div class="customer-form-icon">
-                👤
+                @Model.FullName.Substring(0, 1).ToUpper()
             </div>
 
             <div>
-                <h3>Customer Information</h3>
-                <p>Enter the guest's contact information below.</p>
+                <h3>@Model.FullName</h3>
+                <p>Customer #@Model.Id</p>
             </div>
+
         </div>
 
-        <form asp-action="Create" method="post">
+        <form asp-action="Edit"
+              asp-route-id="@Model.Id"
+              method="post">
+
+            <input type="hidden"
+                   asp-for="Id" />
 
             <div asp-validation-summary="ModelOnly"
                  class="text-danger mb-3">
@@ -45,6 +52,7 @@
             <div class="customer-form-grid">
 
                 <div class="form-group-full">
+
                     <label asp-for="FullName">
                         Full Name
                     </label>
@@ -56,9 +64,11 @@
                     <span asp-validation-for="FullName"
                           class="text-danger">
                     </span>
+
                 </div>
 
                 <div>
+
                     <label asp-for="Phone">
                         Phone Number
                     </label>
@@ -70,9 +80,11 @@
                     <span asp-validation-for="Phone"
                           class="text-danger">
                     </span>
+
                 </div>
 
                 <div>
+
                     <label asp-for="Email">
                         Email Address
                     </label>
@@ -85,9 +97,11 @@
                     <span asp-validation-for="Email"
                           class="text-danger">
                     </span>
+
                 </div>
 
                 <div class="form-group-full">
+
                     <label asp-for="Address">
                         Address
                     </label>
@@ -100,6 +114,7 @@
                     <span asp-validation-for="Address"
                           class="text-danger">
                     </span>
+
                 </div>
 
             </div>
@@ -113,7 +128,7 @@
 
                 <button type="submit"
                         class="hotel-btn hotel-btn-primary">
-                    Save Customer
+                    Save Changes
                 </button>
 
             </div>

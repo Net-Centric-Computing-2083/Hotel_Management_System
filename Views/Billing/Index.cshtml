@@ -1,2 +1,148 @@
-@{ ViewData["Title"] = "View"; }
-<h2>View is Ready</h2>
+@model IEnumerable<HotelManagementSystem.Models.Bill>
+
+@{
+    ViewData["Title"] = "Billing";
+}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h2 class="text-primary">
+            Billing Ledger
+        </h2>
+
+        <p class="text-muted">
+            View and manage guest bills
+        </p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <h5>No bills generated yet.</h5>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Customer</th>
+                                <th>Room</th>
+                                <th>Room Charge</th>
+                                <th>Tax</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var bill in Model)
+                            {
+                                <tr>
+
+                                    <td>
+                                        INV-@bill.Id
+                                    </td>
+
+                                    <td>
+                                        @bill.Booking?.Customer?.FullName
+                                    </td>
+
+                                    <td>
+                                        Room
+                                        @bill.Booking?.Room?.RoomNumber
+                                    </td>
+
+                                    <td>
+                                        Rs. @bill.RoomCharge.ToString("N2")
+                                    </td>
+
+                                    <td>
+                                        Rs. @bill.Tax.ToString("N2")
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            Rs. @bill.TotalAmount.ToString("N2")
+                                        </strong>
+                                    </td>
+
+                                    <td>
+
+                                        @if (bill.IsPaid)
+                                        {
+                                            <span class="badge bg-success">
+                                                Paid
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                Unpaid
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <td>
+
+                                        <a asp-action="Invoice"
+                                           asp-route-id="@bill.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Invoice
+                                        </a>
+
+                                        @if (!bill.IsPaid)
+                                        {
+                                            <form asp-action="MarkPaid"
+                                                  asp-route-id="@bill.Id"
+                                                  method="post"
+                                                  class="d-inline">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-success">
+                                                    Mark Paid
+                                                </button>
+
+                                            </form>
+                                        }
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

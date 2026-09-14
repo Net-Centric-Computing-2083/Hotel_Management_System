@@ -1,8 +1,332 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="hotel-dashboard">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <p class="dashboard-eyebrow">HOTEL MANAGEMENT</p>
+
+            <h1>Dashboard</h1>
+
+            <p class="dashboard-subtitle">
+                Welcome back. Here's an overview of your hotel.
+            </p>
+        </div>
+
+        <div class="dashboard-date">
+            <span>Today</span>
+            <strong>@DateTime.Now.ToString("dd MMM yyyy")</strong>
+        </div>
+    </div>
+
+
+    <!-- Statistics -->
+    <div class="dashboard-stats">
+
+        <!-- Total Rooms -->
+        <div class="stat-card">
+
+            <div class="stat-icon stat-icon-blue">
+                🛏️
+            </div>
+
+            <div>
+                <span>Total Rooms</span>
+
+                <h2>@ViewBag.TotalRooms</h2>
+
+                <small>Registered rooms</small>
+            </div>
+
+        </div>
+
+
+        <!-- Available Rooms -->
+        <div class="stat-card">
+
+            <div class="stat-icon stat-icon-green">
+                ✓
+            </div>
+
+            <div>
+                <span>Available Rooms</span>
+
+                <h2>@ViewBag.AvailableRooms</h2>
+
+                <small>Currently available</small>
+            </div>
+
+        </div>
+
+
+        <!-- Bookings -->
+        <div class="stat-card">
+
+            <div class="stat-icon stat-icon-orange">
+                📅
+            </div>
+
+            <div>
+                <span>Bookings</span>
+
+                <h2>@ViewBag.TotalBookings</h2>
+
+                <small>Total bookings</small>
+            </div>
+
+        </div>
+
+
+        <!-- Customers -->
+        <div class="stat-card">
+
+            <div class="stat-icon stat-icon-purple">
+                👥
+            </div>
+
+            <div>
+                <span>Customers</span>
+
+                <h2>@ViewBag.TotalCustomers</h2>
+
+                <small>Registered guests</small>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Quick Actions -->
+    <div class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+                <h3>Quick Actions</h3>
+
+                <p>Common hotel operations</p>
+            </div>
+
+        </div>
+
+
+        <div class="quick-actions">
+
+            <!-- Add Room -->
+            <a asp-controller="Rooms"
+               asp-action="Create"
+               class="quick-action">
+
+                <div class="quick-action-icon">
+                    🛏️
+                </div>
+
+                <div>
+                    <strong>Add Room</strong>
+                    <span>Register a new room</span>
+                </div>
+
+                <b>→</b>
+
+            </a>
+
+
+            <!-- New Customer -->
+            <a asp-controller="Customers"
+               asp-action="Create"
+               class="quick-action">
+
+                <div class="quick-action-icon">
+                    👤
+                </div>
+
+                <div>
+                    <strong>New Customer</strong>
+                    <span>Register a guest</span>
+                </div>
+
+                <b>→</b>
+
+            </a>
+
+
+            <!-- Book Room -->
+            <a asp-controller="Bookings"
+               asp-action="SearchRooms"
+               class="quick-action">
+
+                <div class="quick-action-icon">
+                    📅
+                </div>
+
+                <div>
+                    <strong>Book a Room</strong>
+                    <span>Find an available room</span>
+                </div>
+
+                <b>→</b>
+
+            </a>
+
+
+            <!-- Check In / Check Out -->
+            <a asp-controller="CheckInOut"
+               asp-action="Index"
+               class="quick-action">
+
+                <div class="quick-action-icon">
+                    🛎️
+                </div>
+
+                <div>
+                    <strong>Check-In / Check-Out</strong>
+                    <span>Manage guest stays</span>
+                </div>
+
+                <b>→</b>
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- Management -->
+    <div class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+                <h3>Management</h3>
+
+                <p>Manage your hotel's operations</p>
+            </div>
+
+        </div>
+
+
+        <div class="management-grid">
+
+            <!-- Rooms -->
+            <a asp-controller="Rooms"
+               asp-action="Index"
+               class="management-card">
+
+                <span class="management-icon">
+                    🛏️
+                </span>
+
+                <div>
+                    <h4>Rooms</h4>
+                    <p>Manage rooms and availability.</p>
+                </div>
+
+                <span class="management-arrow">→</span>
+
+            </a>
+
+
+            <!-- Room Types -->
+            <a asp-controller="RoomTypes"
+               asp-action="Index"
+               class="management-card">
+
+                <span class="management-icon">
+                    🏨
+                </span>
+
+                <div>
+                    <h4>Room Types</h4>
+                    <p>Manage room categories.</p>
+                </div>
+
+                <span class="management-arrow">→</span>
+
+            </a>
+
+
+            <!-- Customers -->
+            <a asp-controller="Customers"
+               asp-action="Index"
+               class="management-card">
+
+                <span class="management-icon">
+                    👥
+                </span>
+
+                <div>
+                    <h4>Customers</h4>
+                    <p>Manage guest information.</p>
+                </div>
+
+                <span class="management-arrow">→</span>
+
+            </a>
+
+
+            <!-- Bookings -->
+            <a asp-controller="Bookings"
+               asp-action="Index"
+               class="management-card">
+
+                <span class="management-icon">
+                    📋
+                </span>
+
+                <div>
+                    <h4>Bookings</h4>
+                    <p>View and manage reservations.</p>
+                </div>
+
+                <span class="management-arrow">→</span>
+
+            </a>
+
+
+            <!-- Billing -->
+            <a asp-controller="Bills"
+               asp-action="Index"
+               class="management-card">
+
+                <span class="management-icon">
+                    💳
+                </span>
+
+                <div>
+                    <h4>Billing</h4>
+                    <p>Manage bills and payments.</p>
+                </div>
+
+                <span class="management-arrow">→</span>
+
+            </a>
+
+
+            <!-- Front Desk -->
+            <a asp-controller="CheckInOut"
+               asp-action="Index"
+               class="management-card">
+
+                <span class="management-icon">
+                    🛎️
+                </span>
+
+                <div>
+                    <h4>Front Desk</h4>
+                    <p>Handle guest check-ins and check-outs.</p>
+                </div>
+
+                <span class="management-arrow">→</span>
+
+            </a>
+
+        </div>
+
+    </div>
+
 </div>

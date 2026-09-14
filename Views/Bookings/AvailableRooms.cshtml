@@ -4,35 +4,52 @@
     ViewData["Title"] = "Available Rooms";
 }
 
-<div class="container py-4">
+<div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-
         <div>
-            <h2 class="text-primary">
-                Available Rooms
-            </h2>
-
+            <h2>Available Rooms</h2>
             <p class="text-muted">
-                @ViewBag.CheckInDate
-                →
-                @ViewBag.CheckOutDate
+                Select a room for your booking.
             </p>
         </div>
 
-        <a asp-action="Create"
-           asp-route-checkInDate="@ViewBag.CheckInDate"
-           asp-route-checkOutDate="@ViewBag.CheckOutDate"
-           class="btn btn-primary">
-            Create Booking
+        <a asp-controller="Bookings"
+           asp-action="SearchRooms"
+           class="btn btn-secondary">
+            Back to Search
         </a>
-
     </div>
 
-    @if (!Model.Any())
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    @{
+        var checkInDate = ViewBag.CheckInDate as string;
+        var checkOutDate = ViewBag.CheckOutDate as string;
+    }
+
+    @if (!string.IsNullOrEmpty(checkInDate) &&
+         !string.IsNullOrEmpty(checkOutDate))
+    {
+        <div class="alert alert-info">
+            <strong>Check-in:</strong> @checkInDate
+            &nbsp;&nbsp;
+            <strong>Check-out:</strong> @checkOutDate
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
     {
         <div class="alert alert-warning">
-            No rooms are available for the selected dates.
+            <h5>No rooms available</h5>
+            <p class="mb-0">
+                There are no available rooms for the selected dates.
+            </p>
         </div>
     }
     else
@@ -43,43 +60,68 @@
             {
                 <div class="col-md-4 mb-4">
 
-                    <div class="card shadow-sm h-100">
+                    <div class="card h-100 shadow-sm">
 
                         <div class="card-body">
 
-                            <h4>
+                            <h5 class="card-title">
                                 Room @room.RoomNumber
-                            </h4>
+                            </h5>
 
-                            <p class="text-muted mb-2">
-                                @room.RoomType?.TypeName
+                            <p class="card-text">
+                                <strong>Room Type:</strong>
+                                @(room.RoomType?.Name ?? "N/A")
                             </p>
 
-                            <p>
-                                <strong>Floor:</strong>
-                                @room.Floor
+                            <p class="card-text">
+                                <strong>Capacity:</strong>
+                                @(room.RoomType?.Capacity ?? 0) persons
                             </p>
 
-                            <p>
-                                <strong>Price:</strong>
-                                Rs. @room.RoomType?.PricePerNight
-                                / night
+                            <p class="card-text">
+                                <strong>Price per night:</strong>
+                                Rs. @room.Price.ToString("N2")
                             </p>
 
-                            <span class="badge bg-success">
-                                Available
-                            </span>
+                            <p class="card-text">
+                                <strong>Status:</strong>
 
-                            <div class="mt-3">
+                                @if (room.IsAvailable)
+                                {
+                                    <span class="badge bg-success">
+                                        Available
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        Unavailable
+                                    </span>
+                                }
+                            </p>
 
-                                <a asp-action="Create"
-                                   asp-route-checkInDate="@ViewBag.CheckInDate"
-                                   asp-route-checkOutDate="@ViewBag.CheckOutDate"
+                        </div>
+
+                        <div class="card-footer bg-white border-0">
+
+                            @if (room.IsAvailable)
+                            {
+                                <a asp-controller="Bookings"
+                                   asp-action="Create"
+                                   asp-route-roomId="@room.RoomId"
+                                   asp-route-checkInDate="@checkInDate"
+                                   asp-route-checkOutDate="@checkOutDate"
                                    class="btn btn-primary w-100">
                                     Book This Room
                                 </a>
-
-                            </div>
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100"
+                                        disabled>
+                                    Unavailable
+                                </button>
+                            }
 
                         </div>
 

@@ -1,2 +1,326 @@
-@{ ViewData["Title"] = "View"; }
-<h2>View is Ready</h2>
+@model IEnumerable<HotelManagementSystem.Models.Booking>
+
+@{
+    ViewData["Title"] = "Bookings";
+}
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <div class="text-primary fw-semibold small text-uppercase">
+                Booking Management
+            </div>
+
+            <h2 class="fw-bold mb-1">
+                Bookings
+            </h2>
+
+            <p class="text-muted mb-0">
+                Manage hotel reservations and guest stays.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            + New Booking
+        </a>
+
+    </div>
+
+
+    <!-- ALERTS -->
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show"
+             role="alert">
+
+            <strong>Success:</strong>
+            @TempData["Success"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show"
+             role="alert">
+
+            <strong>Error:</strong>
+            @TempData["Error"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+
+    <!-- BOOKINGS TABLE -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body">
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th>Booking</th>
+                                <th>Customer</th>
+                                <th>Room</th>
+                                <th>Room Type</th>
+                                <th>Check-In</th>
+                                <th>Check-Out</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @foreach (var booking in Model)
+                            {
+                                /*
+                                 * Determine the actual status from the database
+                                 * instead of Booking.Status because Status is
+                                 * [NotMapped].
+                                 */
+
+                                var isCheckedOut =
+                                    booking.CheckIn?.CheckOut != null;
+
+                                var isCheckedIn =
+                                    booking.CheckIn != null &&
+                                    booking.CheckIn.CheckOut == null;
+
+                                var isPending =
+                                    booking.CheckIn == null;
+
+
+                                <tr>
+
+                                    <!-- BOOKING ID -->
+
+                                    <td>
+
+                                        <div class="fw-semibold">
+                                            #@booking.Id
+                                        </div>
+
+                                        <small class="text-muted">
+                                            @booking.BookingDate.ToString(
+                                                "dd MMM yyyy")
+                                        </small>
+
+                                    </td>
+
+
+                                    <!-- CUSTOMER -->
+
+                                    <td>
+
+                                        <div class="fw-semibold">
+                                            @booking.Customer?.FullName
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(
+                                            booking.Customer?.Phone))
+                                        {
+                                            <small class="text-muted">
+                                                @booking.Customer.Phone
+                                            </small>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ROOM -->
+
+                                    <td>
+
+                                        <span class="fw-semibold">
+                                            Room @booking.Room?.RoomNumber
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- ROOM TYPE -->
+
+                                    <td>
+
+                                        @(booking.Room?.RoomType?.Name
+                                            ?? "—")
+
+                                    </td>
+
+
+                                    <!-- CHECK-IN DATE -->
+
+                                    <td>
+
+                                        @booking.CheckInDate.ToString(
+                                            "dd MMM yyyy")
+
+                                    </td>
+
+
+                                    <!-- CHECK-OUT DATE -->
+
+                                    <td>
+
+                                        @booking.CheckOutDate.ToString(
+                                            "dd MMM yyyy")
+
+                                    </td>
+
+
+                                    <!-- STATUS -->
+
+                                    <td>
+
+                                        @if (isCheckedOut)
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Checked Out
+                                            </span>
+                                        }
+                                        else if (isCheckedIn)
+                                        {
+                                            <span class="badge bg-success">
+                                                Checked In
+                                            </span>
+                                        }
+                                        else if (isPending)
+                                        {
+                                            <span class="badge bg-primary">
+                                                Confirmed
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ACTIONS -->
+
+                                    <td class="text-end">
+
+                                        <div class="d-flex justify-content-end gap-1">
+
+
+                                            <!-- DETAILS -->
+
+                                            <a asp-action="Details"
+                                               asp-route-id="@booking.Id"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                                Details
+
+                                            </a>
+
+
+                                            <!-- EDIT -->
+
+                                            @if (isPending)
+                                            {
+                                                <a asp-action="Edit"
+                                                   asp-route-id="@booking.Id"
+                                                   class="btn btn-sm btn-outline-warning">
+
+                                                    Edit
+
+                                                </a>
+                                            }
+
+
+                                            <!-- CANCEL -->
+
+                                            @if (isPending)
+                                            {
+                                                <form asp-controller="Bookings"
+                                                      asp-action="Cancel"
+                                                      method="post"
+                                                      class="d-inline">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="bookingId"
+                                                           value="@booking.Id" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            onclick="return confirm('Are you sure you want to cancel this booking?');">
+
+                                                        Cancel
+
+                                                    </button>
+
+                                                </form>
+                                            }
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <!-- EMPTY STATE -->
+
+                <div class="text-center py-5">
+
+                    <div class="fs-1 mb-3">
+                        📅
+                    </div>
+
+                    <h5 class="fw-semibold">
+                        No bookings found
+                    </h5>
+
+                    <p class="text-muted">
+                        There are currently no bookings in the system.
+                    </p>
+
+                    <a asp-action="Create"
+                       class="btn btn-primary">
+
+                        Create First Booking
+
+                    </a>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

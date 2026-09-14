@@ -1,0 +1,125 @@
+@model HotelManagementSystem.Models.Customer
+
+@{
+    ViewData["Title"] = "Delete Customer";
+}
+
+<div class="hotel-page">
+
+    <div class="page-header">
+
+        <div>
+            <p class="page-eyebrow">CUSTOMER MANAGEMENT</p>
+
+            <h1>Delete Customer</h1>
+
+            <p class="page-description">
+                Remove a customer from the hotel management system.
+            </p>
+        </div>
+
+        <div class="page-actions">
+
+            <a asp-action="Index"
+               class="hotel-btn hotel-btn-secondary">
+                ← Back to Customers
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="delete-panel">
+
+        <div class="delete-icon">
+            !
+        </div>
+
+        <h2>Delete this customer?</h2>
+
+        <p class="delete-warning">
+            This action cannot be undone. Please make sure you
+            want to remove this customer.
+        </p>
+
+
+        <div class="delete-customer-card">
+
+            <div class="customer-avatar">
+                @Model.FullName.Substring(0, 1).ToUpper()
+            </div>
+
+            <div>
+
+                <h3>
+                    @Model.FullName
+                </h3>
+
+                <span>
+                    Customer #@Model.Id
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="delete-information">
+
+            <div>
+                <span>Phone</span>
+
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.Phone)
+                        ? "Not provided"
+                        : Model.Phone)
+                </strong>
+            </div>
+
+            <div>
+                <span>Email</span>
+
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.Email)
+                        ? "Not provided"
+                        : Model.Email)
+                </strong>
+            </div>
+
+            <div>
+                <span>Address</span>
+
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.Address)
+                        ? "Not provided"
+                        : Model.Address)
+                </strong>
+            </div>
+
+        </div>
+
+
+        <form asp-action="Delete"
+              asp-route-id="@Model.Id"
+              method="post">
+
+            <div class="delete-actions">
+
+                <a asp-action="Index"
+                   class="hotel-btn hotel-btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="hotel-btn hotel-btn-danger">
+                    Delete Customer
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>

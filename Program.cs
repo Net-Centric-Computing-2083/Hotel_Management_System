@@ -16,10 +16,23 @@ using (var scope = app.Services.CreateScope())
     if (!db.RoomTypes.Any())
     {
         db.RoomTypes.AddRange(
-            new RoomType { Name = "Standard", BasePrice = 2000 },
-            new RoomType { Name = "Deluxe", BasePrice = 3500 },
-            new RoomType { Name = "Suite", BasePrice = 6000 }
+            new RoomType
+            {
+                Name = "Standard",
+                Capacity = 2
+            },
+            new RoomType
+            {
+                Name = "Deluxe",
+                Capacity = 3
+            },
+            new RoomType
+            {
+                Name = "Suite",
+                Capacity = 4
+            }
         );
+
         db.SaveChanges();
     }
 }

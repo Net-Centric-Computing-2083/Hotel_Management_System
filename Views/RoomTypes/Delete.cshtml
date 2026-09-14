@@ -1,0 +1,130 @@
+@model HotelManagementSystem.Models.RoomType
+
+@{
+    ViewData["Title"] = "Delete Room Type";
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+
+        <h1 class="fw-bold text-danger">
+            Delete Room Type
+        </h1>
+
+        <p class="text-muted">
+            Review the information before deleting this room type.
+        </p>
+
+    </div>
+
+
+    <div class="row">
+
+        <div class="col-lg-7">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <div class="alert alert-warning">
+
+                        <strong>
+                            Are you sure?
+                        </strong>
+
+                        <br />
+
+                        This action cannot be undone.
+
+                    </div>
+
+
+                    <div class="mb-4">
+
+                        <h4 class="fw-bold">
+                            @Model.Name
+                        </h4>
+
+                        <p class="text-muted mb-1">
+
+                            Capacity:
+                            <strong>
+                                @Model.Capacity guests
+                            </strong>
+
+                        </p>
+
+                        <p class="text-muted">
+
+                            Rooms:
+                            <strong>
+                                @(Model.Rooms?.Count ?? 0)
+                            </strong>
+
+                        </p>
+
+                    </div>
+
+
+                    @if (Model.Rooms != null &&
+                         Model.Rooms.Any())
+                    {
+                        <div class="alert alert-danger">
+
+                            This room type currently has
+                            <strong>
+                                @Model.Rooms.Count room(s)
+                            </strong>
+                            assigned to it.
+
+                            <br />
+
+                            You must remove or reassign those
+                            rooms before deleting this room type.
+
+                        </div>
+
+
+                        <a asp-action="Index"
+                           class="btn btn-secondary">
+                            Back to Room Types
+                        </a>
+                    }
+                    else
+                    {
+                        <form asp-action="DeleteConfirmed"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@Model.RoomTypeId" />
+
+                            <button type="submit"
+                                    class="btn btn-danger">
+
+                                Delete Room Type
+
+                            </button>
+
+                            <a asp-action="Index"
+                               class="btn btn-outline-secondary ms-2">
+
+                                Cancel
+
+                            </a>
+
+                        </form>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,189 @@
+@model HotelManagementSystem.Models.Bill
+
+@{
+    ViewData["Title"] = "Bill Details";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="fw-bold">
+                Bill #@Model.Id
+            </h1>
+
+            <p class="text-muted mb-0">
+                Guest billing details
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-outline-secondary">
+            Back to Bills
+        </a>
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- Guest Information -->
+
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">
+                        Guest Information
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <p>
+                        <strong>Guest:</strong><br />
+                        @(Model.Booking?.Customer?.FullName ?? "N/A")
+                    </p>
+
+                    <p>
+                        <strong>Phone:</strong><br />
+                        @(Model.Booking?.Customer?.Phone ?? "N/A")
+                    </p>
+
+                    <p>
+                        <strong>Email:</strong><br />
+                        @(Model.Booking?.Customer?.Email ?? "N/A")
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Room:</strong><br />
+                        @(Model.Booking?.Room?.RoomNumber ?? "N/A")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Bill -->
+
+        <div class="col-lg-7">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0 fw-bold">
+                        Bill Summary
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span>Check-in</span>
+
+                        <strong>
+                            @Model.Booking?.CheckInDate.ToString("dd MMM yyyy")
+                        </strong>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span>Check-out</span>
+
+                        <strong>
+                            @Model.Booking?.CheckOutDate.ToString("dd MMM yyyy")
+                        </strong>
+
+                    </div>
+
+
+                    <hr />
+
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span>Room Charge</span>
+
+                        <strong>
+                            Rs. @Model.RoomCharge.ToString("N2")
+                        </strong>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-3">
+
+                        <span>Additional Charge</span>
+
+                        <strong>
+                            Rs. @Model.AdditionalCharge.ToString("N2")
+                        </strong>
+
+                    </div>
+
+
+                    <hr />
+
+
+                    <div class="d-flex justify-content-between">
+
+                        <h5 class="fw-bold">
+                            Total
+                        </h5>
+
+                        <h5 class="fw-bold">
+                            Rs. @Model.TotalAmount.ToString("N2")
+                        </h5>
+
+                    </div>
+
+
+                    <div class="mt-4">
+
+                        @if (Model.IsPaid)
+                        {
+                            <div class="alert alert-success mb-0">
+                                ✓ This bill has been paid.
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-action="MarkPaid"
+                                  method="post">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@Model.Id" />
+
+                                <button type="submit"
+                                        class="btn btn-success">
+                                    Mark as Paid
+                                </button>
+
+                            </form>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
