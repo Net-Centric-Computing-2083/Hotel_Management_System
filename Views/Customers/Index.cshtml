@@ -1,2 +1,235 @@
-@{ ViewData["Title"] = "View"; }
-<h2>View is Ready</h2>
+@model IEnumerable<HotelManagementSystem.Models.Customer>
+
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<div class="hotel-page">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <p class="page-eyebrow">CUSTOMER MANAGEMENT</p>
+
+            <h1>Customers</h1>
+
+            <p class="page-description">
+                Manage hotel guests and their contact information.
+            </p>
+        </div>
+
+        <div class="page-actions">
+            <a asp-action="Create"
+               class="hotel-btn hotel-btn-primary">
+                <span>+</span>
+                Add Customer
+            </a>
+        </div>
+    </div>
+
+
+    <!-- Customer Summary -->
+    <div class="room-summary">
+
+        <div class="room-summary-card">
+            <span class="summary-icon">👥</span>
+
+            <div>
+                <span>Total Customers</span>
+                <strong>@Model.Count()</strong>
+            </div>
+        </div>
+
+        <div class="room-summary-card">
+            <span class="summary-icon available">✓</span>
+
+            <div>
+                <span>With Phone</span>
+                <strong>
+                    @Model.Count(c => !string.IsNullOrWhiteSpace(c.Phone))
+                </strong>
+            </div>
+        </div>
+
+        <div class="room-summary-card">
+            <span class="summary-icon occupied">✉</span>
+
+            <div>
+                <span>With Email</span>
+                <strong>
+                    @Model.Count(c => !string.IsNullOrWhiteSpace(c.Email))
+                </strong>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Customers Panel -->
+    <div class="rooms-panel">
+
+        <div class="rooms-panel-header">
+
+            <div>
+                <h3>All Customers</h3>
+
+                <p>
+                    @Model.Count() customers registered
+                </p>
+            </div>
+
+        </div>
+
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty-state">
+
+                <div class="empty-state-icon">
+                    👥
+                </div>
+
+                <h3>No customers yet</h3>
+
+                <p>
+                    Register your first customer to get started.
+                </p>
+
+                <a asp-action="Create"
+                   class="hotel-btn hotel-btn-primary">
+                    Add First Customer
+                </a>
+
+            </div>
+        }
+        else
+        {
+            <div class="customer-grid">
+
+                @foreach (var customer in Model)
+                {
+                    <div class="customer-card">
+
+                        <!-- Customer Header -->
+                        <div class="customer-card-top">
+
+                            <div class="customer-avatar">
+                                @customer.FullName.Substring(0, 1).ToUpper()
+                            </div>
+
+                            <div class="customer-heading">
+
+                                <h3>
+                                    @customer.FullName
+                                </h3>
+
+                                <span>
+                                    Customer #@customer.Id
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Customer Information -->
+                        <div class="customer-card-body">
+
+                            @if (!string.IsNullOrWhiteSpace(customer.Phone))
+                            {
+                                <div class="customer-info">
+
+                                    <span class="customer-info-icon">
+                                        ☎
+                                    </span>
+
+                                    <div>
+                                        <span>Phone</span>
+                                        <strong>
+                                            @customer.Phone
+                                        </strong>
+                                    </div>
+
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(customer.Email))
+                            {
+                                <div class="customer-info">
+
+                                    <span class="customer-info-icon">
+                                        ✉
+                                    </span>
+
+                                    <div>
+                                        <span>Email</span>
+                                        <strong>
+                                            @customer.Email
+                                        </strong>
+                                    </div>
+
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(customer.Address))
+                            {
+                                <div class="customer-info">
+
+                                    <span class="customer-info-icon">
+                                        ⌖
+                                    </span>
+
+                                    <div>
+                                        <span>Address</span>
+                                        <strong>
+                                            @customer.Address
+                                        </strong>
+                                    </div>
+
+                                </div>
+                            }
+
+                            @if (string.IsNullOrWhiteSpace(customer.Phone)
+                                && string.IsNullOrWhiteSpace(customer.Email)
+                                && string.IsNullOrWhiteSpace(customer.Address))
+                            {
+                                <p class="customer-no-info">
+                                    No additional contact information.
+                                </p>
+                            }
+
+                        </div>
+
+
+                        <!-- Actions -->
+                        <div class="customer-card-footer">
+
+                            <a asp-action="Details"
+                               asp-route-id="@customer.Id"
+                               class="customer-action">
+                                View
+                            </a>
+
+                            <a asp-action="Edit"
+                               asp-route-id="@customer.Id"
+                               class="customer-action">
+                                Edit
+                            </a>
+
+                            <a asp-action="Delete"
+                               asp-route-id="@customer.Id"
+                               class="customer-action customer-action-danger">
+                                Delete
+                            </a>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>

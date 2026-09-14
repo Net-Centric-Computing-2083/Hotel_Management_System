@@ -1,2 +1,131 @@
-@{ ViewData["Title"] = "View"; }
-<h2>View is Ready</h2>
+@model HotelManagementSystem.Models.Customer
+
+@{
+    ViewData["Title"] = "Add Customer";
+}
+
+<div class="hotel-page">
+
+    <div class="page-header">
+        <div>
+            <p class="page-eyebrow">CUSTOMER MANAGEMENT</p>
+            <h1>Add Customer</h1>
+            <p class="page-description">
+                Register a new hotel guest.
+            </p>
+        </div>
+
+        <div class="page-actions">
+            <a asp-action="Index"
+               class="hotel-btn hotel-btn-secondary">
+                ← Back to Customers
+            </a>
+        </div>
+    </div>
+
+    <div class="customer-form-panel">
+
+        <div class="customer-form-header">
+            <div class="customer-form-icon">
+                👤
+            </div>
+
+            <div>
+                <h3>Customer Information</h3>
+                <p>Enter the guest's contact information below.</p>
+            </div>
+        </div>
+
+        <form asp-action="Create" method="post">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <div class="customer-form-grid">
+
+                <div class="form-group-full">
+                    <label asp-for="FullName">
+                        Full Name
+                    </label>
+
+                    <input asp-for="FullName"
+                           class="hotel-input"
+                           placeholder="Enter customer's full name" />
+
+                    <span asp-validation-for="FullName"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div>
+                    <label asp-for="Phone">
+                        Phone Number
+                    </label>
+
+                    <input asp-for="Phone"
+                           class="hotel-input"
+                           placeholder="Enter phone number" />
+
+                    <span asp-validation-for="Phone"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div>
+                    <label asp-for="Email">
+                        Email Address
+                    </label>
+
+                    <input asp-for="Email"
+                           type="email"
+                           class="hotel-input"
+                           placeholder="Enter email address" />
+
+                    <span asp-validation-for="Email"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="form-group-full">
+                    <label asp-for="Address">
+                        Address
+                    </label>
+
+                    <textarea asp-for="Address"
+                              class="hotel-input hotel-textarea"
+                              rows="4"
+                              placeholder="Enter customer's address"></textarea>
+
+                    <span asp-validation-for="Address"
+                          class="text-danger">
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="customer-form-footer">
+
+                <a asp-action="Index"
+                   class="hotel-btn hotel-btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="hotel-btn hotel-btn-primary">
+                    Save Customer
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
