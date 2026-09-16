@@ -26,6 +26,60 @@ namespace HotelManagementSystem.Controllers
             return View(await rooms.ToListAsync());
         }
 
+        // =========================================================
+        // FILTER ROOMS BY DATE
+        // =========================================================
+
+        // GET: Rooms/Filter
+        [HttpGet]
+        public async Task<IActionResult> Filter(
+            DateOnly? checkInDate,
+            DateOnly? checkOutDate)
+        {
+            // If no dates are provided, show all rooms
+            if (!checkInDate.HasValue || !checkOutDate.HasValue)
+            {
+                var allRooms = await _context.Rooms
+                    .Include(r => r.RoomType)
+                    .OrderBy(r => r.RoomNumber)
+                    .ToListAsync();
+
+                return View("Index", allRooms);
+            }
+
+            // Validate dates
+            if (checkInDate.Value >= checkOutDate.Value)
+            {
+                TempData["Error"] =
+                    "Check-out date must be after check-in date.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Find rooms that:
+            // 1. Are marked as physically available
+            // 2. Do NOT have a booking overlapping the requested dates
+
+            var availableRooms = await _context.Rooms
+                .Include(r => r.RoomType)
+                .Where(r =>
+                    r.IsAvailable &&
+                    !_context.Bookings.Any(b =>
+                        b.RoomId == r.RoomId &&
+                        b.CheckInDate < checkOutDate.Value &&
+                        b.CheckOutDate > checkInDate.Value
+                    )
+                )
+                .OrderBy(r => r.RoomNumber)
+                .ToListAsync();
+
+            ViewBag.Filtered = true;
+            ViewBag.CheckInDate = checkInDate.Value;
+            ViewBag.CheckOutDate = checkOutDate.Value;
+
+            return View("Index", availableRooms);
+        }
+
         // GET: Rooms/Create
         public IActionResult Create()
         {

@@ -2,6 +2,13 @@
 
 @{
     ViewData["Title"] = "Rooms";
+
+    var rooms = Model ?? Enumerable.Empty<HotelManagementSystem.Models.Room>();
+
+    bool isFiltered = ViewBag.Filtered == true;
+
+    DateOnly? filterCheckIn = ViewBag.CheckInDate as DateOnly?;
+    DateOnly? filterCheckOut = ViewBag.CheckOutDate as DateOnly?;
 }
 
 <div class="hotel-page">
@@ -42,7 +49,7 @@
                 <span>Total Rooms</span>
 
                 <strong>
-                    @Model.Count()
+                    @rooms.Count()
                 </strong>
             </div>
         </div>
@@ -55,7 +62,7 @@
                 <span>Available</span>
 
                 <strong>
-                    @Model.Count(r => r.IsAvailable)
+                    @rooms.Count(r => r.IsAvailable)
                 </strong>
             </div>
         </div>
@@ -68,12 +75,119 @@
                 <span>Occupied</span>
 
                 <strong>
-                    @Model.Count(r => !r.IsAvailable)
+                    @rooms.Count(r => !r.IsAvailable)
                 </strong>
             </div>
         </div>
 
     </div>
+
+
+    <!-- ========================================================= -->
+    <!-- DATE AVAILABILITY FILTER -->
+    <!-- ========================================================= -->
+
+    <div class="rooms-filter-panel">
+
+        <div class="rooms-filter-header">
+
+            <div>
+                <p class="page-eyebrow">AVAILABILITY SEARCH</p>
+
+                <h3>Check Room Availability</h3>
+
+                <p>
+                    Find rooms available for your selected dates.
+                </p>
+            </div>
+
+            @if (isFiltered)
+            {
+                <a asp-action="Index"
+                   class="hotel-btn hotel-btn-secondary">
+                    Show All Rooms
+                </a>
+            }
+
+        </div>
+
+
+        <form asp-action="Filter"
+              method="get"
+              class="rooms-filter-form">
+
+            <div class="filter-field">
+
+                <label for="checkInDate">
+                    Check-In Date
+                </label>
+
+                <input type="date"
+                       id="checkInDate"
+                       name="checkInDate"
+                       value="@(filterCheckIn.HasValue
+                           ? filterCheckIn.Value.ToString("yyyy-MM-dd")
+                       : "")"
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                       required />
+
+            </div>
+
+
+            <div class="filter-field">
+
+                <label for="checkOutDate">
+                    Check-Out Date
+                </label>
+
+                <input type="date"
+                       id="checkOutDate"
+                       name="checkOutDate"
+                       value="@(filterCheckOut.HasValue
+                           ? filterCheckOut.Value.ToString("yyyy-MM-dd")
+                       : "")"
+                       min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")"
+                       required />
+
+            </div>
+
+
+            <div class="filter-action">
+
+                <button type="submit"
+                        class="hotel-btn hotel-btn-primary">
+                    Search Available Rooms
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    @if (isFiltered)
+    {
+        <div class="availability-result">
+
+            <div>
+                <strong>Availability Results</strong>
+
+                <span>
+                    @filterCheckIn.Value.ToString("dd MMM yyyy")
+                    -
+                    @filterCheckOut.Value.ToString("dd MMM yyyy")
+                </span>
+            </div>
+
+            <div class="availability-count">
+                @rooms.Count()
+                @(rooms.Count() == 1 ? "room" : "rooms")
+                available
+            </div>
+
+        </div>
+    }
 
 
     <!-- Rooms -->
@@ -82,17 +196,21 @@
         <div class="rooms-panel-header">
 
             <div>
-                <h3>All Rooms</h3>
+                <h3>
+                    @(isFiltered ? "Available Rooms" : "All Rooms")
+                </h3>
 
                 <p>
-                    @Model.Count() rooms registered
+                    @rooms.Count()
+                    @(rooms.Count() == 1 ? "room" : "rooms")
+                    @(isFiltered ? "available for selected dates" : "registered")
                 </p>
             </div>
 
         </div>
 
 
-        @if (Model == null || !Model.Any())
+        @if (!rooms.Any())
         {
             <div class="empty-state">
 
@@ -100,16 +218,33 @@
                     🛏️
                 </div>
 
-                <h3>No rooms yet</h3>
+                @if (isFiltered)
+                {
+                    <h3>No rooms available</h3>
 
-                <p>
-                    Add your first hotel room to get started.
-                </p>
+                    <p>
+                        No rooms are available for the selected dates.
+                        Try another date range.
+                    </p>
 
-                <a asp-action="Create"
-                   class="hotel-btn hotel-btn-primary">
-                    Add First Room
-                </a>
+                    <a asp-action="Index"
+                       class="hotel-btn hotel-btn-primary">
+                        Show All Rooms
+                    </a>
+                }
+                else
+                {
+                    <h3>No rooms yet</h3>
+
+                    <p>
+                        Add your first hotel room to get started.
+                    </p>
+
+                    <a asp-action="Create"
+                       class="hotel-btn hotel-btn-primary">
+                        Add First Room
+                    </a>
+                }
 
             </div>
         }
@@ -117,7 +252,7 @@
         {
             <div class="rooms-grid">
 
-                @foreach (var room in Model)
+                @foreach (var room in rooms)
                 {
                     <div class="room-card">
 
@@ -211,3 +346,48 @@
     </div>
 
 </div>
+
+
+<!-- ========================================================= -->
+<!-- DATE FILTER VALIDATION -->
+<!-- ========================================================= -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const checkIn = document.getElementById("checkInDate");
+        const checkOut = document.getElementById("checkOutDate");
+
+        if (!checkIn || !checkOut) {
+            return;
+        }
+
+        function updateCheckoutMinimum() {
+
+            if (!checkIn.value) {
+                return;
+            }
+
+            const date = new Date(checkIn.value + "T00:00:00");
+
+            date.setDate(date.getDate() + 1);
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+
+            const minimumDate =
+                `${year}-${month}-${day}`;
+
+            checkOut.min = minimumDate;
+
+            if (checkOut.value && checkOut.value < minimumDate) {
+                checkOut.value = minimumDate;
+            }
+        }
+
+        checkIn.addEventListener("change", updateCheckoutMinimum);
+
+        updateCheckoutMinimum();
+    });
+</script>
