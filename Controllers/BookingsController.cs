@@ -1,6 +1,5 @@
 using HotelManagementSystem.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagementSystem.Controllers
@@ -121,7 +120,10 @@ namespace HotelManagementSystem.Controllers
             ModelState.Remove(nameof(Booking.Bill));
             ModelState.Remove(nameof(Booking.CheckIn));
 
+            // ---------------------------------------------------------
             // Validate dates
+            // ---------------------------------------------------------
+
             if (booking.CheckInDate >= booking.CheckOutDate)
             {
                 ModelState.AddModelError(
@@ -129,7 +131,10 @@ namespace HotelManagementSystem.Controllers
                     "Check-out date must be after check-in date.");
             }
 
+            // ---------------------------------------------------------
             // Check customer
+            // ---------------------------------------------------------
+
             var customerExists = await _context.Customers
                 .AnyAsync(c => c.Id == booking.CustomerId);
 
@@ -140,7 +145,10 @@ namespace HotelManagementSystem.Controllers
                     "Please select a valid customer.");
             }
 
+            // ---------------------------------------------------------
             // Get room
+            // ---------------------------------------------------------
+
             var room = await _context.Rooms
                 .Include(r => r.RoomType)
                 .FirstOrDefaultAsync(r => r.RoomId == booking.RoomId);
@@ -151,8 +159,25 @@ namespace HotelManagementSystem.Controllers
                     nameof(Booking.RoomId),
                     "Please select a valid room.");
             }
+            else
+            {
+                // -----------------------------------------------------
+                // IMPORTANT:
+                // Do not allow rooms marked as unavailable to be booked.
+                // -----------------------------------------------------
 
+                if (!room.IsAvailable)
+                {
+                    ModelState.AddModelError(
+                        nameof(Booking.RoomId),
+                        "This room is currently unavailable and cannot be booked.");
+                }
+            }
+
+            // ---------------------------------------------------------
             // Check overlapping booking
+            // ---------------------------------------------------------
+
             var alreadyBooked = await _context.Bookings
                 .AnyAsync(b =>
                     b.RoomId == booking.RoomId &&
@@ -166,13 +191,20 @@ namespace HotelManagementSystem.Controllers
                     "This room is already booked for the selected dates.");
             }
 
+            // ---------------------------------------------------------
+            // Return form if validation failed
+            // ---------------------------------------------------------
+
             if (!ModelState.IsValid)
             {
                 await LoadCreateData();
                 return View(booking);
             }
 
-            // Set booking date automatically
+            // ---------------------------------------------------------
+            // Create booking
+            // ---------------------------------------------------------
+
             booking.BookingDate = DateTime.Now;
 
             // Booking starts as confirmed/pending check-in
@@ -246,7 +278,10 @@ namespace HotelManagementSystem.Controllers
             ModelState.Remove(nameof(Booking.Bill));
             ModelState.Remove(nameof(Booking.CheckIn));
 
+            // ---------------------------------------------------------
             // Validate dates
+            // ---------------------------------------------------------
+
             if (booking.CheckInDate >= booking.CheckOutDate)
             {
                 ModelState.AddModelError(
@@ -254,7 +289,10 @@ namespace HotelManagementSystem.Controllers
                     "Check-out date must be after check-in date.");
             }
 
+            // ---------------------------------------------------------
             // Check customer
+            // ---------------------------------------------------------
+
             var customerExists = await _context.Customers
                 .AnyAsync(c => c.Id == booking.CustomerId);
 
@@ -265,18 +303,35 @@ namespace HotelManagementSystem.Controllers
                     "Please select a valid customer.");
             }
 
+            // ---------------------------------------------------------
             // Check room
-            var roomExists = await _context.Rooms
-                .AnyAsync(r => r.RoomId == booking.RoomId);
+            // ---------------------------------------------------------
 
-            if (!roomExists)
+            var room = await _context.Rooms
+                .Include(r => r.RoomType)
+                .FirstOrDefaultAsync(r => r.RoomId == booking.RoomId);
+
+            if (room == null)
             {
                 ModelState.AddModelError(
                     nameof(Booking.RoomId),
                     "Please select a valid room.");
             }
+            else
+            {
+                // Do not allow an unavailable room to be selected
+                if (!room.IsAvailable)
+                {
+                    ModelState.AddModelError(
+                        nameof(Booking.RoomId),
+                        "This room is currently unavailable and cannot be booked.");
+                }
+            }
 
+            // ---------------------------------------------------------
             // Check overlapping bookings
+            // ---------------------------------------------------------
+
             var overlappingBooking = await _context.Bookings
                 .AnyAsync(b =>
                     b.Id != booking.Id &&
@@ -291,13 +346,20 @@ namespace HotelManagementSystem.Controllers
                     "This room is already booked for the selected dates.");
             }
 
+            // ---------------------------------------------------------
+            // Return form if validation failed
+            // ---------------------------------------------------------
+
             if (!ModelState.IsValid)
             {
                 await LoadCreateData();
                 return View(booking);
             }
 
+            // ---------------------------------------------------------
             // Find existing booking
+            // ---------------------------------------------------------
+
             var existingBooking = await _context.Bookings
                 .Include(b => b.CheckIn)
                 .FirstOrDefaultAsync(b => b.Id == id);
@@ -316,7 +378,10 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Update only editable fields
+            // ---------------------------------------------------------
+            // Update editable fields
+            // ---------------------------------------------------------
+
             existingBooking.CustomerId = booking.CustomerId;
             existingBooking.RoomId = booking.RoomId;
             existingBooking.CheckInDate = booking.CheckInDate;
@@ -454,12 +519,17 @@ namespace HotelManagementSystem.Controllers
 
         private async Task LoadCreateData()
         {
+            // Load customers
             ViewBag.Customers = await _context.Customers
                 .OrderBy(c => c.FullName)
                 .ToListAsync();
 
+            // IMPORTANT:
+            // Only rooms marked as available are shown
+            // in the booking form.
             ViewBag.Rooms = await _context.Rooms
                 .Include(r => r.RoomType)
+                .Where(r => r.IsAvailable)
                 .OrderBy(r => r.RoomNumber)
                 .ToListAsync();
         }
