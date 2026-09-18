@@ -7,8 +7,21 @@
 
     bool isFiltered = ViewBag.Filtered == true;
 
-    DateOnly? filterCheckIn = ViewBag.CheckInDate as DateOnly?;
-    DateOnly? filterCheckOut = ViewBag.CheckOutDate as DateOnly?;
+    string currentSearch = ViewBag.CurrentSearch as string ?? "";
+    int? currentRoomType = ViewBag.CurrentRoomType as int?;
+    string currentAvailability = ViewBag.CurrentAvailability as string ?? "";
+    string currentSort = ViewBag.CurrentSort as string ?? "";
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalRooms = ViewBag.TotalRooms ?? rooms.Count();
+
+    DateOnly? checkInDate = ViewBag.CheckInDate as DateOnly?;
+    DateOnly? checkOutDate = ViewBag.CheckOutDate as DateOnly?;
+
+    var roomTypes = ViewBag.RoomTypes
+        as IEnumerable<HotelManagementSystem.Models.RoomType>
+        ?? Enumerable.Empty<HotelManagementSystem.Models.RoomType>();
 }
 
 <div class="hotel-page">
@@ -49,7 +62,7 @@
                 <span>Total Rooms</span>
 
                 <strong>
-                    @rooms.Count()
+                    @totalRooms
                 </strong>
             </div>
         </div>
@@ -72,7 +85,7 @@
             <span class="summary-icon occupied">●</span>
 
             <div>
-                <span>Occupied</span>
+                <span>Unavailable</span>
 
                 <strong>
                     @rooms.Count(r => !r.IsAvailable)
@@ -84,7 +97,7 @@
 
 
     <!-- ========================================================= -->
-    <!-- DATE AVAILABILITY FILTER -->
+    <!-- FILTER AND SORT PANEL -->
     <!-- ========================================================= -->
 
     <div class="rooms-filter-panel">
@@ -92,30 +105,284 @@
         <div class="rooms-filter-header">
 
             <div>
-                <p class="page-eyebrow">AVAILABILITY SEARCH</p>
+                <p class="page-eyebrow">ROOM SEARCH</p>
 
-                <h3>Check Room Availability</h3>
+                <h3>Find Rooms</h3>
 
                 <p>
-                    Find rooms available for your selected dates.
+                    Search, filter and sort hotel rooms.
                 </p>
             </div>
 
-            @if (isFiltered)
-            {
-                <a asp-action="Index"
-                   class="hotel-btn hotel-btn-secondary">
-                    Show All Rooms
-                </a>
-            }
+            <a asp-action="Index"
+               class="hotel-btn hotel-btn-secondary">
+                Reset
+            </a>
+
+        </div>
+
+
+        <!-- General Filters -->
+        <form asp-action="Index"
+              method="get"
+              class="rooms-filter-form">
+
+            <!-- Search -->
+            <div class="filter-field">
+
+                <label for="search">
+                    Room Number
+                </label>
+
+                <input type="text"
+                       id="search"
+                       name="search"
+                       value="@currentSearch"
+                       placeholder="Search room number..." />
+
+            </div>
+
+
+            <!-- Room Type -->
+            <div class="filter-field">
+
+                <label for="roomTypeId">
+                    Room Type
+                </label>
+
+                <select id="roomTypeId"
+                        name="roomTypeId">
+
+                    <option value="">
+                        All Room Types
+                    </option>
+
+                    @foreach (var type in roomTypes)
+                    {
+                        if (currentRoomType == type.RoomTypeId)
+                        {
+                            <option value="@type.RoomTypeId"
+                                    selected>
+                                @type.Name
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@type.RoomTypeId">
+                                @type.Name
+                            </option>
+                        }
+                    }
+
+                </select>
+
+            </div>
+
+
+            <!-- Availability -->
+            <div class="filter-field">
+
+                <label for="availability">
+                    Availability
+                </label>
+
+                <select id="availability"
+                        name="availability">
+
+                    @if (string.IsNullOrEmpty(currentAvailability))
+                    {
+                        <option value="" selected>
+                            All Rooms
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="">
+                            All Rooms
+                        </option>
+                    }
+
+                    @if (currentAvailability == "available")
+                    {
+                        <option value="available" selected>
+                            Available
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="available">
+                            Available
+                        </option>
+                    }
+
+                    @if (currentAvailability == "unavailable")
+                    {
+                        <option value="unavailable" selected>
+                            Unavailable
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="unavailable">
+                            Unavailable
+                        </option>
+                    }
+
+                </select>
+
+            </div>
+
+
+            <!-- Sorting -->
+            <div class="filter-field">
+
+                <label for="sortOrder">
+                    Sort By
+                </label>
+
+                <select id="sortOrder"
+                        name="sortOrder">
+
+                    @if (string.IsNullOrEmpty(currentSort))
+                    {
+                        <option value="" selected>
+                            Room Number ↑
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="">
+                            Room Number ↑
+                        </option>
+                    }
+
+                    @if (currentSort == "room_desc")
+                    {
+                        <option value="room_desc" selected>
+                            Room Number ↓
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="room_desc">
+                            Room Number ↓
+                        </option>
+                    }
+
+                    @if (currentSort == "price_asc")
+                    {
+                        <option value="price_asc" selected>
+                            Price: Low to High
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="price_asc">
+                            Price: Low to High
+                        </option>
+                    }
+
+                    @if (currentSort == "price_desc")
+                    {
+                        <option value="price_desc" selected>
+                            Price: High to Low
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="price_desc">
+                            Price: High to Low
+                        </option>
+                    }
+
+                    @if (currentSort == "type_asc")
+                    {
+                        <option value="type_asc" selected>
+                            Room Type A-Z
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="type_asc">
+                            Room Type A-Z
+                        </option>
+                    }
+
+                    @if (currentSort == "type_desc")
+                    {
+                        <option value="type_desc" selected>
+                            Room Type Z-A
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="type_desc">
+                            Room Type Z-A
+                        </option>
+                    }
+
+                    @if (currentSort == "availability")
+                    {
+                        <option value="availability" selected>
+                            Available First
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="availability">
+                            Available First
+                        </option>
+                    }
+
+                </select>
+
+            </div>
+
+
+            <div class="filter-action">
+
+                <button type="submit"
+                        class="hotel-btn hotel-btn-primary">
+                    Search
+                </button>
+
+            </div>
+
+        </form>
+
+
+        <!-- Date Availability -->
+        <div class="date-filter-divider"></div>
+
+        <div class="date-filter-title">
+
+            <div>
+                <strong>
+                    Check Availability by Date
+                </strong>
+
+                <span>
+                    Find rooms available during a specific stay.
+                </span>
+            </div>
 
         </div>
 
 
         <form asp-action="Filter"
               method="get"
-              class="rooms-filter-form">
+              class="rooms-filter-form date-filter-form">
 
+            <!-- Preserve existing search -->
+            <input type="hidden"
+                   name="search"
+                   value="@currentSearch" />
+
+            <input type="hidden"
+                   name="roomTypeId"
+                   value="@currentRoomType" />
+
+            <!-- Check-in -->
             <div class="filter-field">
 
                 <label for="checkInDate">
@@ -125,8 +392,8 @@
                 <input type="date"
                        id="checkInDate"
                        name="checkInDate"
-                       value="@(filterCheckIn.HasValue
-                           ? filterCheckIn.Value.ToString("yyyy-MM-dd")
+                       value="@(checkInDate.HasValue
+                           ? checkInDate.Value.ToString("yyyy-MM-dd")
                        : "")"
                        min="@DateTime.Today.ToString("yyyy-MM-dd")"
                        required />
@@ -134,6 +401,7 @@
             </div>
 
 
+            <!-- Check-out -->
             <div class="filter-field">
 
                 <label for="checkOutDate">
@@ -143,8 +411,8 @@
                 <input type="date"
                        id="checkOutDate"
                        name="checkOutDate"
-                       value="@(filterCheckOut.HasValue
-                           ? filterCheckOut.Value.ToString("yyyy-MM-dd")
+                       value="@(checkOutDate.HasValue
+                           ? checkOutDate.Value.ToString("yyyy-MM-dd")
                        : "")"
                        min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")"
                        required />
@@ -152,11 +420,16 @@
             </div>
 
 
+            <!-- Empty space -->
+            <div></div>
+
+
+            <!-- Search -->
             <div class="filter-action">
 
                 <button type="submit"
                         class="hotel-btn hotel-btn-primary">
-                    Search Available Rooms
+                    Check Available Rooms
                 </button>
 
             </div>
@@ -166,24 +439,31 @@
     </div>
 
 
-    @if (isFiltered)
+    <!-- Availability Result -->
+    @if (isFiltered && checkInDate.HasValue && checkOutDate.HasValue)
     {
         <div class="availability-result">
 
             <div>
-                <strong>Availability Results</strong>
+
+                <strong>
+                    Availability Results
+                </strong>
 
                 <span>
-                    @filterCheckIn.Value.ToString("dd MMM yyyy")
+                    @checkInDate.Value.ToString("dd MMM yyyy")
                     -
-                    @filterCheckOut.Value.ToString("dd MMM yyyy")
+                    @checkOutDate.Value.ToString("dd MMM yyyy")
                 </span>
+
             </div>
 
             <div class="availability-count">
+
                 @rooms.Count()
                 @(rooms.Count() == 1 ? "room" : "rooms")
                 available
+
             </div>
 
         </div>
@@ -196,15 +476,26 @@
         <div class="rooms-panel-header">
 
             <div>
+
                 <h3>
-                    @(isFiltered ? "Available Rooms" : "All Rooms")
+                    @(isFiltered
+                        ? "Available Rooms"
+                        : "All Rooms")
                 </h3>
 
                 <p>
-                    @rooms.Count()
-                    @(rooms.Count() == 1 ? "room" : "rooms")
-                    @(isFiltered ? "available for selected dates" : "registered")
+
+                    @if (isFiltered)
+                    {
+                        @($"{rooms.Count()} rooms available for selected dates")
+                    }
+                    else
+                    {
+                        @($"{totalRooms} rooms registered")
+                    }
+
                 </p>
+
             </div>
 
         </div>
@@ -220,11 +511,13 @@
 
                 @if (isFiltered)
                 {
-                    <h3>No rooms available</h3>
+                    <h3>
+                        No rooms available
+                    </h3>
 
                     <p>
-                        No rooms are available for the selected dates.
-                        Try another date range.
+                        No rooms are available for the selected
+                        dates and filters.
                     </p>
 
                     <a asp-action="Index"
@@ -234,15 +527,17 @@
                 }
                 else
                 {
-                    <h3>No rooms yet</h3>
+                    <h3>
+                        No rooms found
+                    </h3>
 
                     <p>
-                        Add your first hotel room to get started.
+                        Try changing your search or filters.
                     </p>
 
                     <a asp-action="Create"
                        class="hotel-btn hotel-btn-primary">
-                        Add First Room
+                        Add Room
                     </a>
                 }
 
@@ -271,7 +566,7 @@
                             else
                             {
                                 <span class="room-status occupied">
-                                    Occupied
+                                    Unavailable
                                 </span>
                             }
 
@@ -292,22 +587,30 @@
                             <div class="room-info">
 
                                 <div>
-                                    <span>Capacity</span>
+
+                                    <span>
+                                        Capacity
+                                    </span>
 
                                     <strong>
                                         @(room.RoomType?.Capacity ?? 0)
                                         Guests
                                     </strong>
+
                                 </div>
 
 
                                 <div>
-                                    <span>Price</span>
+
+                                    <span>
+                                        Price
+                                    </span>
 
                                     <strong>
                                         Rs. @room.Price.ToString("N2")
                                         <small>/night</small>
                                     </strong>
+
                                 </div>
 
                             </div>
@@ -341,6 +644,121 @@
                 }
 
             </div>
+
+
+            <!-- ================================================= -->
+            <!-- PAGINATION -->
+            <!-- ================================================= -->
+            @if (totalPages > 1)
+            {
+                <div class="rooms-pagination">
+
+                    <div class="pagination-info">
+
+                        Showing page
+                        <strong>@currentPage</strong>
+                        of
+                        <strong>@totalPages</strong>
+
+                    </div>
+
+
+                    <div class="pagination-buttons">
+
+                        @if (currentPage > 1)
+                        {
+                            @if (isFiltered)
+                            {
+                                <a asp-action="Filter"
+                                   asp-route-checkInDate="@checkInDate"
+                                   asp-route-checkOutDate="@checkOutDate"
+                                   asp-route-search="@currentSearch"
+                                   asp-route-roomTypeId="@currentRoomType"
+                                   asp-route-sortOrder="@currentSort"
+                                   asp-route-page="@(currentPage - 1)"
+                                   class="pagination-button">
+                                    ← Previous
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Index"
+                                   asp-route-search="@currentSearch"
+                                   asp-route-roomTypeId="@currentRoomType"
+                                   asp-route-availability="@currentAvailability"
+                                   asp-route-sortOrder="@currentSort"
+                                   asp-route-page="@(currentPage - 1)"
+                                   class="pagination-button">
+                                    ← Previous
+                                </a>
+                            }
+                        }
+
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            @if (isFiltered)
+                            {
+                                <a asp-action="Filter"
+                                   asp-route-checkInDate="@checkInDate"
+                                   asp-route-checkOutDate="@checkOutDate"
+                                   asp-route-search="@currentSearch"
+                                   asp-route-roomTypeId="@currentRoomType"
+                                   asp-route-sortOrder="@currentSort"
+                                   asp-route-page="@i"
+                                   class="pagination-button @(i == currentPage ? "active" : "")">
+                                    @i
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Index"
+                                   asp-route-search="@currentSearch"
+                                   asp-route-roomTypeId="@currentRoomType"
+                                   asp-route-availability="@currentAvailability"
+                                   asp-route-sortOrder="@currentSort"
+                                   asp-route-page="@i"
+                                   class="pagination-button @(i == currentPage ? "active" : "")">
+                                    @i
+                                </a>
+                            }
+                        }
+
+
+                        @if (currentPage < totalPages)
+                        {
+                            @if (isFiltered)
+                            {
+                                <a asp-action="Filter"
+                                   asp-route-checkInDate="@checkInDate"
+                                   asp-route-checkOutDate="@checkOutDate"
+                                   asp-route-search="@currentSearch"
+                                   asp-route-roomTypeId="@currentRoomType"
+                                   asp-route-sortOrder="@currentSort"
+                                   asp-route-page="@(currentPage + 1)"
+                                   class="pagination-button">
+                                    Next →
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Index"
+                                   asp-route-search="@currentSearch"
+                                   asp-route-roomTypeId="@currentRoomType"
+                                   asp-route-availability="@currentAvailability"
+                                   asp-route-sortOrder="@currentSort"
+                                   asp-route-page="@(currentPage + 1)"
+                                   class="pagination-button">
+                                    Next →
+                                </a>
+                            }
+                        }
+
+                    </div>
+
+                </div>
+            }
+
         }
 
     </div>
@@ -349,7 +767,7 @@
 
 
 <!-- ========================================================= -->
-<!-- DATE FILTER VALIDATION -->
+<!-- DATE FILTER JAVASCRIPT -->
 <!-- ========================================================= -->
 
 <script>
@@ -368,25 +786,35 @@
                 return;
             }
 
-            const date = new Date(checkIn.value + "T00:00:00");
+            const date =
+                new Date(checkIn.value + "T00:00:00");
 
             date.setDate(date.getDate() + 1);
 
             const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const day = String(date.getDate()).padStart(2, "0");
+
+            const month =
+                String(date.getMonth() + 1).padStart(2, "0");
+
+            const day =
+                String(date.getDate()).padStart(2, "0");
 
             const minimumDate =
                 `${year}-${month}-${day}`;
 
             checkOut.min = minimumDate;
 
-            if (checkOut.value && checkOut.value < minimumDate) {
+            if (checkOut.value &&
+                checkOut.value < minimumDate) {
+
                 checkOut.value = minimumDate;
             }
         }
 
-        checkIn.addEventListener("change", updateCheckoutMinimum);
+        checkIn.addEventListener(
+            "change",
+            updateCheckoutMinimum
+        );
 
         updateCheckoutMinimum();
     });

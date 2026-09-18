@@ -3,28 +3,45 @@
 @{
     ViewData["Title"] = "Check-In / Check-Out";
 
-    var pendingCheckIns = Model
+    string? search = ViewBag.Search as string;
+    string? status = ViewBag.Status as string;
+    string? sortOrder = ViewBag.CurrentSort as string;
+
+    DateOnly? checkInDate = ViewBag.CheckInDate as DateOnly?;
+    DateOnly? checkOutDate = ViewBag.CheckOutDate as DateOnly?;
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalItems = ViewBag.TotalItems ?? 0;
+
+    var allBookings = Model?.ToList()
+        ?? new List<HotelManagementSystem.Models.Booking>();
+
+    var pendingCheckIns = allBookings
         .Where(b => b.CheckIn == null)
-        .OrderBy(b => b.CheckInDate)
         .ToList();
 
-    var activeGuests = Model
-        .Where(b => b.CheckIn != null && b.CheckIn.CheckOut == null)
-        .OrderBy(b => b.CheckOutDate)
+    var activeGuests = allBookings
+        .Where(b => b.CheckIn != null &&
+                    b.CheckIn.CheckOut == null)
         .ToList();
 
-    var completedStays = Model
-        .Where(b => b.CheckIn != null && b.CheckIn.CheckOut != null)
-        .OrderByDescending(b => b.CheckIn!.CheckOut!.CheckOutDateTime)
+    var completedStays = allBookings
+        .Where(b => b.CheckIn != null &&
+                    b.CheckIn.CheckOut != null)
         .ToList();
 }
 
 <div class="container py-4">
 
-    <!-- PAGE HEADER -->
+    <!-- =========================================================
+         PAGE HEADER
+         ========================================================= -->
+
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
+
             <div class="text-primary fw-semibold small text-uppercase">
                 Front Desk
             </div>
@@ -36,9 +53,11 @@
             <p class="text-muted mb-0">
                 Manage guest arrivals, current stays and departures.
             </p>
+
         </div>
 
         <div class="text-end">
+
             <div class="text-muted small">
                 Today's Date
             </div>
@@ -46,12 +65,16 @@
             <div class="fw-semibold">
                 @DateTime.Now.ToString("dd MMM yyyy")
             </div>
+
         </div>
 
     </div>
 
 
-    <!-- ALERTS -->
+    <!-- =========================================================
+         ALERTS
+         ========================================================= -->
+
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show shadow-sm"
@@ -85,10 +108,14 @@
     }
 
 
-    <!-- SUMMARY CARDS -->
+    <!-- =========================================================
+         SUMMARY CARDS
+         ========================================================= -->
+
     <div class="row g-3 mb-4">
 
         <!-- Pending -->
+
         <div class="col-md-4">
 
             <div class="card border-0 shadow-sm h-100">
@@ -115,6 +142,7 @@
 
 
         <!-- Current -->
+
         <div class="col-md-4">
 
             <div class="card border-0 shadow-sm h-100">
@@ -141,6 +169,7 @@
 
 
         <!-- Completed -->
+
         <div class="col-md-4">
 
             <div class="card border-0 shadow-sm h-100">
@@ -168,9 +197,226 @@
     </div>
 
 
-    <!-- ========================================= -->
-    <!-- PENDING CHECK-INS -->
-    <!-- ========================================= -->
+    <!-- =========================================================
+         SEARCH / FILTER PANEL
+         ========================================================= -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        Search & Filter
+                    </h5>
+
+                    <small class="text-muted">
+                        Find guests and stays by customer, room, status or date.
+                    </small>
+
+                </div>
+
+                <span class="badge bg-light text-dark border">
+                    @totalItems record@(totalItems == 1 ? "" : "s")
+                </span>
+
+            </div>
+
+
+            <form asp-action="Index"
+                  method="get">
+
+                <div class="row g-3">
+
+                    <!-- SEARCH -->
+
+                    <div class="col-lg-4 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Search
+                        </label>
+
+                        <input type="text"
+                               name="search"
+                               value="@search"
+                               class="form-control"
+                               placeholder="Customer name or room number" />
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div class="col-lg-3 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Status
+                        </label>
+
+                        <select name="status"
+                                class="form-select">
+
+                            <option value="">
+                                All Statuses
+                            </option>
+
+                            <option value="Ready"
+                                    selected="@(status == "Ready")">
+                                Ready for Check-In
+                            </option>
+
+                            <option value="Checked In"
+                                    selected="@(status == "Checked In")">
+                                Checked In
+                            </option>
+
+                            <option value="Checked Out"
+                                    selected="@(status == "Checked Out")">
+                                Checked Out
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- SORT -->
+
+                    <div class="col-lg-3 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Sort By
+                        </label>
+
+                        <select name="sortOrder"
+                                class="form-select">
+
+                            <option value=""
+                                    selected="@(string.IsNullOrEmpty(sortOrder))">
+                                Newest Booking
+                            </option>
+
+                            <option value="oldest"
+                                    selected="@(sortOrder == "oldest")">
+                                Oldest Booking
+                            </option>
+
+                            <option value="customer_asc"
+                                    selected="@(sortOrder == "customer_asc")">
+                                Customer A-Z
+                            </option>
+
+                            <option value="customer_desc"
+                                    selected="@(sortOrder == "customer_desc")">
+                                Customer Z-A
+                            </option>
+
+                            <option value="room_asc"
+                                    selected="@(sortOrder == "room_asc")">
+                                Room A-Z
+                            </option>
+
+                            <option value="room_desc"
+                                    selected="@(sortOrder == "room_desc")">
+                                Room Z-A
+                            </option>
+
+                            <option value="checkin_asc"
+                                    selected="@(sortOrder == "checkin_asc")">
+                                Check-In Earliest
+                            </option>
+
+                            <option value="checkin_desc"
+                                    selected="@(sortOrder == "checkin_desc")">
+                                Check-In Latest
+                            </option>
+
+                            <option value="checkout_asc"
+                                    selected="@(sortOrder == "checkout_asc")">
+                                Check-Out Earliest
+                            </option>
+
+                            <option value="checkout_desc"
+                                    selected="@(sortOrder == "checkout_desc")">
+                                Check-Out Latest
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- ACTIONS -->
+
+                    <div class="col-lg-2 col-md-6 d-flex align-items-end">
+
+                        <div class="d-flex gap-2 w-100">
+
+                            <button type="submit"
+                                    class="btn btn-primary flex-grow-1">
+                                Search
+                            </button>
+
+                            <a asp-action="Index"
+                               class="btn btn-outline-secondary">
+                                Reset
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DATE FILTERS -->
+
+                <hr class="my-4" />
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Check-In From
+                        </label>
+
+                        <input type="date"
+                               name="checkInDate"
+                               value="@(checkInDate?.ToString("yyyy-MM-dd"))"
+                               class="form-control" />
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Check-Out Until
+                        </label>
+
+                        <input type="date"
+                               name="checkOutDate"
+                               value="@(checkOutDate?.ToString("yyyy-MM-dd"))"
+                               class="form-control" />
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         PENDING CHECK-INS
+         ========================================================= -->
 
     <div class="card border-0 shadow-sm mb-4">
 
@@ -208,15 +454,18 @@
                     <thead class="table-light">
 
                         <tr>
+
                             <th>Guest</th>
                             <th>Room</th>
                             <th>Room Type</th>
                             <th>Check-In</th>
                             <th>Check-Out</th>
                             <th class="text-end">Action</th>
+
                         </tr>
 
                     </thead>
+
 
                     <tbody>
 
@@ -224,7 +473,6 @@
                         {
                             <tr>
 
-                                <!-- Guest -->
                                 <td>
 
                                     <div class="fw-semibold">
@@ -238,7 +486,6 @@
                                 </td>
 
 
-                                <!-- Room -->
                                 <td>
 
                                     <span class="fw-semibold">
@@ -248,53 +495,55 @@
                                 </td>
 
 
-                                <!-- Room Type -->
                                 <td>
-
                                     @booking.Room?.RoomType?.Name
-
                                 </td>
 
 
-                                <!-- Check In Date -->
                                 <td>
-
                                     @booking.CheckInDate.ToString("dd MMM yyyy")
-
                                 </td>
 
 
-                                <!-- Check Out Date -->
                                 <td>
-
                                     @booking.CheckOutDate.ToString("dd MMM yyyy")
-
                                 </td>
 
 
-                                <!-- Action -->
                                 <td class="text-end">
 
-                                    <form asp-controller="CheckInOut"
-                                          asp-action="CheckIn"
-                                          method="post"
-                                          class="d-inline">
+                                    <div class="d-flex justify-content-end gap-2">
 
-                                        @Html.AntiForgeryToken()
+                                        <a asp-action="Details"
+                                           asp-route-id="@booking.Id"
+                                           class="btn btn-outline-primary btn-sm">
 
-                                        <input type="hidden"
-                                               name="bookingId"
-                                               value="@booking.Id" />
+                                            Details
 
-                                        <button type="submit"
-                                                class="btn btn-success btn-sm px-3"
-                                                onclick="return confirm('Check in this guest?');">
+                                        </a>
 
-                                            Check In
+                                        <form asp-controller="CheckInOut"
+                                              asp-action="CheckIn"
+                                              method="post"
+                                              class="d-inline">
 
-                                        </button>
+                                            @Html.AntiForgeryToken()
 
-                                    </form>
+                                            <input type="hidden"
+                                                   name="bookingId"
+                                                   value="@booking.Id" />
+
+                                            <button type="submit"
+                                                    class="btn btn-success btn-sm px-3"
+                                                    onclick="return confirm('Check in this guest?');">
+
+                                                Check In
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
 
                                 </td>
 
@@ -329,9 +578,9 @@
     </div>
 
 
-    <!-- ========================================= -->
-    <!-- CURRENT GUESTS -->
-    <!-- ========================================= -->
+    <!-- =========================================================
+         CURRENT GUESTS
+         ========================================================= -->
 
     <div class="card border-0 shadow-sm mb-4">
 
@@ -369,24 +618,27 @@
                     <thead class="table-light">
 
                         <tr>
+
                             <th>Guest</th>
                             <th>Room</th>
                             <th>Checked In</th>
                             <th>Scheduled Check-Out</th>
                             <th class="text-end">Action</th>
+
                         </tr>
 
                     </thead>
+
 
                     <tbody>
 
                         @foreach (var booking in activeGuests)
                         {
-                            var checkedInAt = booking.CheckIn?.CheckInDateTime;
+                            var checkedInAt =
+                                booking.CheckIn?.CheckInDateTime;
 
                             <tr>
 
-                                <!-- Guest -->
                                 <td>
 
                                     <div class="fw-semibold">
@@ -400,7 +652,6 @@
                                 </td>
 
 
-                                <!-- Room -->
                                 <td>
 
                                     <span class="fw-semibold">
@@ -410,12 +661,12 @@
                                 </td>
 
 
-                                <!-- Actual Check In -->
                                 <td>
 
                                     @if (checkedInAt.HasValue)
                                     {
-                                        @checkedInAt.Value.ToString("dd MMM yyyy, hh:mm tt")
+                                        @checkedInAt.Value.ToString(
+                                            "dd MMM yyyy, hh:mm tt")
                                     }
                                     else
                                     {
@@ -427,37 +678,48 @@
                                 </td>
 
 
-                                <!-- Scheduled Check Out -->
                                 <td>
 
-                                    @booking.CheckOutDate.ToString("dd MMM yyyy")
+                                    @booking.CheckOutDate.ToString(
+                                        "dd MMM yyyy")
 
                                 </td>
 
 
-                                <!-- Action -->
                                 <td class="text-end">
 
-                                    <form asp-controller="CheckInOut"
-                                          asp-action="CheckOut"
-                                          method="post"
-                                          class="d-inline">
+                                    <div class="d-flex justify-content-end gap-2">
 
-                                        @Html.AntiForgeryToken()
+                                        <a asp-action="Details"
+                                           asp-route-id="@booking.Id"
+                                           class="btn btn-outline-primary btn-sm">
 
-                                        <input type="hidden"
-                                               name="bookingId"
-                                               value="@booking.Id" />
+                                            Details
 
-                                        <button type="submit"
-                                                class="btn btn-danger btn-sm px-3"
-                                                onclick="return confirm('Check out this guest?');">
+                                        </a>
 
-                                            Check Out
+                                        <form asp-controller="CheckInOut"
+                                              asp-action="CheckOut"
+                                              method="post"
+                                              class="d-inline">
 
-                                        </button>
+                                            @Html.AntiForgeryToken()
 
-                                    </form>
+                                            <input type="hidden"
+                                                   name="bookingId"
+                                                   value="@booking.Id" />
+
+                                            <button type="submit"
+                                                    class="btn btn-danger btn-sm px-3"
+                                                    onclick="return confirm('Check out this guest?');">
+
+                                                Check Out
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
 
                                 </td>
 
@@ -492,9 +754,9 @@
     </div>
 
 
-    <!-- ========================================= -->
-    <!-- COMPLETED CHECK-OUTS -->
-    <!-- ========================================= -->
+    <!-- =========================================================
+         COMPLETED CHECK-OUTS
+         ========================================================= -->
 
     <div class="card border-0 shadow-sm mb-4">
 
@@ -532,14 +794,17 @@
                     <thead class="table-light">
 
                         <tr>
+
                             <th>Guest</th>
                             <th>Room</th>
                             <th>Check-In</th>
                             <th>Checked Out</th>
                             <th>Status</th>
+
                         </tr>
 
                     </thead>
+
 
                     <tbody>
 
@@ -553,7 +818,6 @@
 
                             <tr>
 
-                                <!-- Guest -->
                                 <td>
 
                                     <div class="fw-semibold">
@@ -567,7 +831,6 @@
                                 </td>
 
 
-                                <!-- Room -->
                                 <td>
 
                                     <span class="fw-semibold">
@@ -577,7 +840,6 @@
                                 </td>
 
 
-                                <!-- Check In -->
                                 <td>
 
                                     @if (checkedInAt.HasValue)
@@ -595,7 +857,6 @@
                                 </td>
 
 
-                                <!-- Check Out -->
                                 <td>
 
                                     @if (checkedOutAt.HasValue)
@@ -613,7 +874,6 @@
                                 </td>
 
 
-                                <!-- Status -->
                                 <td>
 
                                     <span class="badge bg-secondary">
@@ -643,5 +903,144 @@
         }
 
     </div>
+
+
+    <!-- =========================================================
+         PAGINATION
+         ========================================================= -->
+
+    @if (totalPages > 1)
+    {
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                    <div class="text-muted small">
+
+                        Showing page
+                        <strong>@currentPage</strong>
+                        of
+                        <strong>@totalPages</strong>
+
+                    </div>
+
+
+                    <nav aria-label="Check-in/check-out pagination">
+
+                        <ul class="pagination mb-0">
+
+                            <!-- PREVIOUS -->
+
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-search="@search"
+                                       asp-route-status="@status"
+                                       asp-route-checkInDate="@checkInDate"
+                                       asp-route-checkOutDate="@checkOutDate"
+                                       asp-route-sortOrder="@sortOrder"
+                                       asp-route-page="@(currentPage - 1)">
+
+                                        Previous
+
+                                    </a>
+
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item disabled">
+
+                                    <span class="page-link">
+                                        Previous
+                                    </span>
+
+                                </li>
+                            }
+
+
+                            <!-- PAGE NUMBERS -->
+
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                if (i == currentPage)
+                                {
+                                    <li class="page-item active">
+
+                                        <span class="page-link">
+                                            @i
+                                        </span>
+
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="page-item">
+
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-search="@search"
+                                           asp-route-status="@status"
+                                           asp-route-checkInDate="@checkInDate"
+                                           asp-route-checkOutDate="@checkOutDate"
+                                           asp-route-sortOrder="@sortOrder"
+                                           asp-route-page="@i">
+
+                                            @i
+
+                                        </a>
+
+                                    </li>
+                                }
+                            }
+
+
+                            <!-- NEXT -->
+
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-search="@search"
+                                       asp-route-status="@status"
+                                       asp-route-checkInDate="@checkInDate"
+                                       asp-route-checkOutDate="@checkOutDate"
+                                       asp-route-sortOrder="@sortOrder"
+                                       asp-route-page="@(currentPage + 1)">
+
+                                        Next
+
+                                    </a>
+
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item disabled">
+
+                                    <span class="page-link">
+                                        Next
+                                    </span>
+
+                                </li>
+                            }
+
+                        </ul>
+
+                    </nav>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
 
 </div>

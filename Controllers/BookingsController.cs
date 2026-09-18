@@ -8,6 +8,8 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        private const int PageSize = 6;
+
         public BookingsController(ApplicationDbContext context)
         {
             _context = context;
@@ -18,16 +20,154 @@ namespace HotelManagementSystem.Controllers
         // =========================================================
 
         // GET: Bookings
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            string? search,
+            string? status,
+            DateOnly? checkInDate,
+            DateOnly? checkOutDate,
+            string? sortOrder,
+            int page = 1)
         {
-            var bookings = await _context.Bookings
+            if (page < 1)
+                page = 1;
+
+            var query = _context.Bookings
                 .Include(b => b.Customer)
                 .Include(b => b.Room)
                     .ThenInclude(r => r.RoomType)
                 .Include(b => b.CheckIn)
                     .ThenInclude(c => c!.CheckOut)
-                .OrderByDescending(b => b.Id)
+                .AsQueryable();
+
+            // ---------------------------------------------------------
+            // SEARCH
+            // ---------------------------------------------------------
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(b =>
+                    b.Customer.FullName.Contains(search) ||
+                    b.Room.RoomNumber.Contains(search));
+            }
+
+            // ---------------------------------------------------------
+            // DATE FILTER
+            // ---------------------------------------------------------
+
+            if (checkInDate.HasValue)
+            {
+                query = query.Where(b =>
+                    b.CheckInDate >= checkInDate.Value);
+            }
+
+            if (checkOutDate.HasValue)
+            {
+                query = query.Where(b =>
+                    b.CheckOutDate <= checkOutDate.Value);
+            }
+
+            // ---------------------------------------------------------
+            // STATUS FILTER
+            //
+            // Confirmed  = no check-in
+            // Checked In = check-in exists, checkout does not
+            // Checked Out = checkout exists
+            // ---------------------------------------------------------
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                switch (status)
+                {
+                    case "Confirmed":
+                        query = query.Where(b =>
+                            b.CheckIn == null);
+                        break;
+
+                    case "Checked In":
+                        query = query.Where(b =>
+                            b.CheckIn != null &&
+                            b.CheckIn.CheckOut == null);
+                        break;
+
+                    case "Checked Out":
+                        query = query.Where(b =>
+                            b.CheckIn != null &&
+                            b.CheckIn.CheckOut != null);
+                        break;
+                }
+            }
+
+            // ---------------------------------------------------------
+            // SORTING
+            // ---------------------------------------------------------
+
+            ViewBag.CurrentSort = sortOrder;
+
+            query = sortOrder switch
+            {
+                "customer_asc" =>
+                    query.OrderBy(b => b.Customer.FullName),
+
+                "customer_desc" =>
+                    query.OrderByDescending(b => b.Customer.FullName),
+
+                "room_asc" =>
+                    query.OrderBy(b => b.Room.RoomNumber),
+
+                "room_desc" =>
+                    query.OrderByDescending(b => b.Room.RoomNumber),
+
+                "checkin_asc" =>
+                    query.OrderBy(b => b.CheckInDate),
+
+                "checkin_desc" =>
+                    query.OrderByDescending(b => b.CheckInDate),
+
+                "checkout_asc" =>
+                    query.OrderBy(b => b.CheckOutDate),
+
+                "checkout_desc" =>
+                    query.OrderByDescending(b => b.CheckOutDate),
+
+                "oldest" =>
+                    query.OrderBy(b => b.Id),
+
+                _ =>
+                    query.OrderByDescending(b => b.Id)
+            };
+
+            // ---------------------------------------------------------
+            // PAGINATION
+            // ---------------------------------------------------------
+
+            var totalItems = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(
+                totalItems / (double)PageSize);
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            var bookings = await query
+                .Skip((page - 1) * PageSize)
+                .Take(PageSize)
                 .ToListAsync();
+
+            // ---------------------------------------------------------
+            // VIEW DATA
+            // ---------------------------------------------------------
+
+            ViewBag.Search = search;
+            ViewBag.Status = status;
+            ViewBag.CheckInDate = checkInDate;
+            ViewBag.CheckOutDate = checkOutDate;
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.PageSize = PageSize;
 
             return View(bookings);
         }
@@ -76,23 +216,19 @@ namespace HotelManagementSystem.Controllers
         {
             var booking = new Booking();
 
-            // Default check-in date = today
             booking.CheckInDate = checkInDate.HasValue
                 ? DateOnly.FromDateTime(checkInDate.Value)
                 : DateOnly.FromDateTime(DateTime.Today);
 
-            // Default check-out date = tomorrow
             booking.CheckOutDate = checkOutDate.HasValue
                 ? DateOnly.FromDateTime(checkOutDate.Value)
                 : DateOnly.FromDateTime(DateTime.Today.AddDays(1));
 
-            // Preselect customer if supplied
             if (customerId.HasValue)
             {
                 booking.CustomerId = customerId.Value;
             }
 
-            // Preselect room if supplied
             if (roomId.HasValue)
             {
                 booking.RoomId = roomId.Value;
@@ -108,13 +244,10 @@ namespace HotelManagementSystem.Controllers
         // CREATE - POST
         // =========================================================
 
-        // POST: Bookings/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Booking booking)
         {
-            // Navigation properties are selected using IDs.
-            // They should not be validated as required form fields.
             ModelState.Remove(nameof(Booking.Customer));
             ModelState.Remove(nameof(Booking.Room));
             ModelState.Remove(nameof(Booking.Bill));
@@ -159,19 +292,11 @@ namespace HotelManagementSystem.Controllers
                     nameof(Booking.RoomId),
                     "Please select a valid room.");
             }
-            else
+            else if (!room.IsAvailable)
             {
-                // -----------------------------------------------------
-                // IMPORTANT:
-                // Do not allow rooms marked as unavailable to be booked.
-                // -----------------------------------------------------
-
-                if (!room.IsAvailable)
-                {
-                    ModelState.AddModelError(
-                        nameof(Booking.RoomId),
-                        "This room is currently unavailable and cannot be booked.");
-                }
+                ModelState.AddModelError(
+                    nameof(Booking.RoomId),
+                    "This room is currently unavailable and cannot be booked.");
             }
 
             // ---------------------------------------------------------
@@ -206,8 +331,6 @@ namespace HotelManagementSystem.Controllers
             // ---------------------------------------------------------
 
             booking.BookingDate = DateTime.Now;
-
-            // Booking starts as confirmed/pending check-in
             booking.Status = "Confirmed";
 
             _context.Bookings.Add(booking);
@@ -225,7 +348,6 @@ namespace HotelManagementSystem.Controllers
         // EDIT - GET
         // =========================================================
 
-        // GET: Bookings/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -243,7 +365,6 @@ namespace HotelManagementSystem.Controllers
                 return NotFound();
             }
 
-            // Do not allow editing after check-in
             if (booking.CheckIn != null)
             {
                 TempData["Error"] =
@@ -262,7 +383,6 @@ namespace HotelManagementSystem.Controllers
         // EDIT - POST
         // =========================================================
 
-        // POST: Bookings/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Booking booking)
@@ -272,7 +392,6 @@ namespace HotelManagementSystem.Controllers
                 return NotFound();
             }
 
-            // Navigation properties should not be required
             ModelState.Remove(nameof(Booking.Customer));
             ModelState.Remove(nameof(Booking.Room));
             ModelState.Remove(nameof(Booking.Bill));
@@ -317,15 +436,11 @@ namespace HotelManagementSystem.Controllers
                     nameof(Booking.RoomId),
                     "Please select a valid room.");
             }
-            else
+            else if (!room.IsAvailable)
             {
-                // Do not allow an unavailable room to be selected
-                if (!room.IsAvailable)
-                {
-                    ModelState.AddModelError(
-                        nameof(Booking.RoomId),
-                        "This room is currently unavailable and cannot be booked.");
-                }
+                ModelState.AddModelError(
+                    nameof(Booking.RoomId),
+                    "This room is currently unavailable and cannot be booked.");
             }
 
             // ---------------------------------------------------------
@@ -369,7 +484,6 @@ namespace HotelManagementSystem.Controllers
                 return NotFound();
             }
 
-            // Do not allow editing after check-in
             if (existingBooking.CheckIn != null)
             {
                 TempData["Error"] =
@@ -379,7 +493,7 @@ namespace HotelManagementSystem.Controllers
             }
 
             // ---------------------------------------------------------
-            // Update editable fields
+            // Update
             // ---------------------------------------------------------
 
             existingBooking.CustomerId = booking.CustomerId;
@@ -400,7 +514,6 @@ namespace HotelManagementSystem.Controllers
         // DELETE - GET
         // =========================================================
 
-        // GET: Bookings/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -429,7 +542,6 @@ namespace HotelManagementSystem.Controllers
         // DELETE - POST
         // =========================================================
 
-        // POST: Bookings/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -445,7 +557,6 @@ namespace HotelManagementSystem.Controllers
                 return NotFound();
             }
 
-            // Do not delete a booking that has already been checked in
             if (booking.CheckIn != null)
             {
                 TempData["Error"] =
@@ -454,7 +565,6 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Delete related bill if one exists
             if (booking.Bill != null)
             {
                 _context.Bills.Remove(booking.Bill);
@@ -475,7 +585,6 @@ namespace HotelManagementSystem.Controllers
         // CANCEL BOOKING
         // =========================================================
 
-        // POST: Bookings/Cancel
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int bookingId)
@@ -490,7 +599,6 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Cannot cancel after check-in
             if (booking.CheckIn != null)
             {
                 TempData["Error"] =
@@ -499,9 +607,6 @@ namespace HotelManagementSystem.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Since Status is NotMapped, this only changes the
-            // current object and is not persisted to the database.
-            // Therefore, we delete the booking for this schema.
             _context.Bookings.Remove(booking);
 
             await _context.SaveChangesAsync();
@@ -519,14 +624,10 @@ namespace HotelManagementSystem.Controllers
 
         private async Task LoadCreateData()
         {
-            // Load customers
             ViewBag.Customers = await _context.Customers
                 .OrderBy(c => c.FullName)
                 .ToListAsync();
 
-            // IMPORTANT:
-            // Only rooms marked as available are shown
-            // in the booking form.
             ViewBag.Rooms = await _context.Rooms
                 .Include(r => r.RoomType)
                 .Where(r => r.IsAvailable)

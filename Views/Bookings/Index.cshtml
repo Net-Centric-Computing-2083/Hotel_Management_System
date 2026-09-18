@@ -2,11 +2,25 @@
 
 @{
     ViewData["Title"] = "Bookings";
+
+    string? search = ViewBag.Search as string;
+    string? status = ViewBag.Status as string;
+    string? sortOrder = ViewBag.CurrentSort as string;
+
+    DateOnly? checkInDate = ViewBag.CheckInDate as DateOnly?;
+    DateOnly? checkOutDate = ViewBag.CheckOutDate as DateOnly?;
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalItems = ViewBag.TotalItems ?? 0;
 }
 
 <div class="container py-4">
 
-    <!-- HEADER -->
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <div>
@@ -31,7 +45,9 @@
     </div>
 
 
-    <!-- ALERTS -->
+    <!-- =========================================================
+         ALERTS
+         ========================================================= -->
 
     @if (TempData["Success"] != null)
     {
@@ -67,7 +83,224 @@
     }
 
 
-    <!-- BOOKINGS TABLE -->
+    <!-- =========================================================
+         FILTER / SEARCH PANEL
+         ========================================================= -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        Search & Filter Bookings
+                    </h5>
+
+                    <small class="text-muted">
+                        Find reservations by guest, room, status or date.
+                    </small>
+                </div>
+
+                <span class="badge bg-light text-dark border">
+                    @totalItems booking@(totalItems == 1 ? "" : "s")
+                </span>
+
+            </div>
+
+
+            <form asp-action="Index"
+                  method="get">
+
+                <div class="row g-3">
+
+                    <!-- SEARCH -->
+
+                    <div class="col-lg-4 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Search
+                        </label>
+
+                        <input type="text"
+                               name="search"
+                               value="@search"
+                               class="form-control"
+                               placeholder="Customer name or room number" />
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div class="col-lg-2 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Status
+                        </label>
+
+                        <select name="status"
+                                class="form-select">
+
+                            <option value="">
+                                All Statuses
+                            </option>
+
+                            <option value="Confirmed"
+                                    selected="@(status == "Confirmed")">
+                                Confirmed
+                            </option>
+
+                            <option value="Checked In"
+                                    selected="@(status == "Checked In")">
+                                Checked In
+                            </option>
+
+                            <option value="Checked Out"
+                                    selected="@(status == "Checked Out")">
+                                Checked Out
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- SORT -->
+
+                    <div class="col-lg-3 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Sort By
+                        </label>
+
+                        <select name="sortOrder"
+                                class="form-select">
+
+                            <option value=""
+                                    selected="@(string.IsNullOrEmpty(sortOrder))">
+                                Newest Booking
+                            </option>
+
+                            <option value="oldest"
+                                    selected="@(sortOrder == "oldest")">
+                                Oldest Booking
+                            </option>
+
+                            <option value="customer_asc"
+                                    selected="@(sortOrder == "customer_asc")">
+                                Customer A-Z
+                            </option>
+
+                            <option value="customer_desc"
+                                    selected="@(sortOrder == "customer_desc")">
+                                Customer Z-A
+                            </option>
+
+                            <option value="room_asc"
+                                    selected="@(sortOrder == "room_asc")">
+                                Room A-Z
+                            </option>
+
+                            <option value="room_desc"
+                                    selected="@(sortOrder == "room_desc")">
+                                Room Z-A
+                            </option>
+
+                            <option value="checkin_asc"
+                                    selected="@(sortOrder == "checkin_asc")">
+                                Check-In Earliest
+                            </option>
+
+                            <option value="checkin_desc"
+                                    selected="@(sortOrder == "checkin_desc")">
+                                Check-In Latest
+                            </option>
+
+                            <option value="checkout_asc"
+                                    selected="@(sortOrder == "checkout_asc")">
+                                Check-Out Earliest
+                            </option>
+
+                            <option value="checkout_desc"
+                                    selected="@(sortOrder == "checkout_desc")">
+                                Check-Out Latest
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- BUTTONS -->
+
+                    <div class="col-lg-3 col-md-6 d-flex align-items-end">
+
+                        <div class="d-flex gap-2 w-100">
+
+                            <button type="submit"
+                                    class="btn btn-primary flex-grow-1">
+                                Search
+                            </button>
+
+                            <a asp-action="Index"
+                               class="btn btn-outline-secondary">
+                                Reset
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DATE FILTERS -->
+
+                <hr class="my-4" />
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Check-In From
+                        </label>
+
+                        <input type="date"
+                               name="checkInDate"
+                               value="@(checkInDate?.ToString("yyyy-MM-dd"))"
+                               class="form-control" />
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Check-Out Until
+                        </label>
+
+                        <input type="date"
+                               name="checkOutDate"
+                               value="@(checkOutDate?.ToString("yyyy-MM-dd"))"
+                               class="form-control" />
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         BOOKINGS TABLE
+         ========================================================= -->
 
     <div class="card border-0 shadow-sm">
 
@@ -82,14 +315,39 @@
                         <thead class="table-light">
 
                             <tr>
-                                <th>Booking</th>
-                                <th>Customer</th>
-                                <th>Room</th>
-                                <th>Room Type</th>
-                                <th>Check-In</th>
-                                <th>Check-Out</th>
-                                <th>Status</th>
-                                <th class="text-end">Actions</th>
+
+                                <th>
+                                    Booking
+                                </th>
+
+                                <th>
+                                    Customer
+                                </th>
+
+                                <th>
+                                    Room
+                                </th>
+
+                                <th>
+                                    Room Type
+                                </th>
+
+                                <th>
+                                    Check-In
+                                </th>
+
+                                <th>
+                                    Check-Out
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th class="text-end">
+                                    Actions
+                                </th>
+
                             </tr>
 
                         </thead>
@@ -100,9 +358,8 @@
                             @foreach (var booking in Model)
                             {
                                 /*
-                                 * Determine the actual status from the database
-                                 * instead of Booking.Status because Status is
-                                 * [NotMapped].
+                                 * Determine actual booking status from
+                                 * CheckIn / CheckOut records.
                                  */
 
                                 var isCheckedOut =
@@ -118,7 +375,9 @@
 
                                 <tr>
 
-                                    <!-- BOOKING ID -->
+                                    <!-- =================================================
+                                         BOOKING
+                                         ================================================= -->
 
                                     <td>
 
@@ -134,7 +393,9 @@
                                     </td>
 
 
-                                    <!-- CUSTOMER -->
+                                    <!-- =================================================
+                                         CUSTOMER
+                                         ================================================= -->
 
                                     <td>
 
@@ -153,7 +414,9 @@
                                     </td>
 
 
-                                    <!-- ROOM -->
+                                    <!-- =================================================
+                                         ROOM
+                                         ================================================= -->
 
                                     <td>
 
@@ -164,17 +427,20 @@
                                     </td>
 
 
-                                    <!-- ROOM TYPE -->
+                                    <!-- =================================================
+                                         ROOM TYPE
+                                         ================================================= -->
 
                                     <td>
 
-                                        @(booking.Room?.RoomType?.Name
-                                            ?? "—")
+                                        @(booking.Room?.RoomType?.Name ?? "—")
 
                                     </td>
 
 
-                                    <!-- CHECK-IN DATE -->
+                                    <!-- =================================================
+                                         CHECK-IN
+                                         ================================================= -->
 
                                     <td>
 
@@ -184,7 +450,9 @@
                                     </td>
 
 
-                                    <!-- CHECK-OUT DATE -->
+                                    <!-- =================================================
+                                         CHECK-OUT
+                                         ================================================= -->
 
                                     <td>
 
@@ -194,7 +462,9 @@
                                     </td>
 
 
-                                    <!-- STATUS -->
+                                    <!-- =================================================
+                                         STATUS
+                                         ================================================= -->
 
                                     <td>
 
@@ -220,12 +490,13 @@
                                     </td>
 
 
-                                    <!-- ACTIONS -->
+                                    <!-- =================================================
+                                         ACTIONS
+                                         ================================================= -->
 
                                     <td class="text-end">
 
-                                        <div class="d-flex justify-content-end gap-1">
-
+                                        <div class="d-flex justify-content-end gap-1 flex-wrap">
 
                                             <!-- DETAILS -->
 
@@ -290,10 +561,144 @@
                     </table>
 
                 </div>
+
+
+                <!-- =========================================================
+                     PAGINATION
+                     ========================================================= -->
+
+                @if (totalPages > 1)
+                {
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+
+                        <div class="text-muted small">
+
+                            Showing page
+                            <strong>@currentPage</strong>
+                            of
+                            <strong>@totalPages</strong>
+
+                        </div>
+
+
+                        <nav aria-label="Booking pagination">
+
+                            <ul class="pagination mb-0">
+
+                                <!-- PREVIOUS -->
+
+                                @if (currentPage > 1)
+                                {
+                                    <li class="page-item">
+
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-search="@search"
+                                           asp-route-status="@status"
+                                           asp-route-checkInDate="@checkInDate"
+                                           asp-route-checkOutDate="@checkOutDate"
+                                           asp-route-sortOrder="@sortOrder"
+                                           asp-route-page="@(currentPage - 1)">
+
+                                            Previous
+
+                                        </a>
+
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="page-item disabled">
+
+                                        <span class="page-link">
+                                            Previous
+                                        </span>
+
+                                    </li>
+                                }
+
+
+                                <!-- PAGE NUMBERS -->
+
+                                @for (int i = 1; i <= totalPages; i++)
+                                {
+                                    if (i == currentPage)
+                                    {
+                                        <li class="page-item active">
+
+                                            <span class="page-link">
+                                                @i
+                                            </span>
+
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="page-item">
+
+                                            <a class="page-link"
+                                               asp-action="Index"
+                                               asp-route-search="@search"
+                                               asp-route-status="@status"
+                                               asp-route-checkInDate="@checkInDate"
+                                               asp-route-checkOutDate="@checkOutDate"
+                                               asp-route-sortOrder="@sortOrder"
+                                               asp-route-page="@i">
+
+                                                @i
+
+                                            </a>
+
+                                        </li>
+                                    }
+                                }
+
+
+                                <!-- NEXT -->
+
+                                @if (currentPage < totalPages)
+                                {
+                                    <li class="page-item">
+
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-search="@search"
+                                           asp-route-status="@status"
+                                           asp-route-checkInDate="@checkInDate"
+                                           asp-route-checkOutDate="@checkOutDate"
+                                           asp-route-sortOrder="@sortOrder"
+                                           asp-route-page="@(currentPage + 1)">
+
+                                            Next
+
+                                        </a>
+
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="page-item disabled">
+
+                                        <span class="page-link">
+                                            Next
+                                        </span>
+
+                                    </li>
+                                }
+
+                            </ul>
+
+                        </nav>
+
+                    </div>
+                }
+
             }
             else
             {
-                <!-- EMPTY STATE -->
+                <!-- =====================================================
+                     EMPTY STATE
+                     ===================================================== -->
 
                 <div class="text-center py-5">
 
@@ -306,15 +711,26 @@
                     </h5>
 
                     <p class="text-muted">
-                        There are currently no bookings in the system.
+                        No bookings match your current search or filters.
                     </p>
 
-                    <a asp-action="Create"
-                       class="btn btn-primary">
+                    <div class="d-flex justify-content-center gap-2">
 
-                        Create First Booking
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary">
 
-                    </a>
+                            Clear Filters
+
+                        </a>
+
+                        <a asp-action="Create"
+                           class="btn btn-primary">
+
+                            Create Booking
+
+                        </a>
+
+                    </div>
 
                 </div>
             }

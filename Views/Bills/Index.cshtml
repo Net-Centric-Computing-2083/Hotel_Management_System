@@ -2,62 +2,357 @@
 
 @{
     ViewData["Title"] = "Bills";
+
+    string? search = ViewBag.Search as string;
+    string? paymentStatus = ViewBag.PaymentStatus as string;
+    string? sortOrder = ViewBag.CurrentSort as string;
+
+    DateTime? billDateFrom = ViewBag.BillDateFrom as DateTime?;
+    DateTime? billDateTo = ViewBag.BillDateTo as DateTime?;
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalItems = ViewBag.TotalItems ?? 0;
 }
 
 <div class="container-fluid">
 
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+
     <div class="d-flex justify-content-between align-items-center mb-4">
+
         <div>
-            <h1 class="fw-bold mb-1">Bills & Payments</h1>
+
+            <div class="text-primary fw-semibold small text-uppercase">
+                Finance
+            </div>
+
+            <h1 class="fw-bold mb-1">
+                Bills & Payments
+            </h1>
+
             <p class="text-muted mb-0">
                 Manage guest bills and payment status.
             </p>
+
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">
+        <a asp-action="Create"
+           class="btn btn-primary">
             + Create Bill
         </a>
+
     </div>
+
+
+    <!-- =========================================================
+         ALERTS
+         ========================================================= -->
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm"
+             role="alert">
+
+            <strong>Success:</strong>
             @TempData["Success"]
+
             <button type="button"
                     class="btn-close"
-                    data-bs-dismiss="alert"></button>
+                    data-bs-dismiss="alert">
+            </button>
+
         </div>
     }
 
+
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show">
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm"
+             role="alert">
+
+            <strong>Error:</strong>
             @TempData["Error"]
+
             <button type="button"
                     class="btn-close"
-                    data-bs-dismiss="alert"></button>
+                    data-bs-dismiss="alert">
+            </button>
+
         </div>
     }
+
+
+    <!-- =========================================================
+         SEARCH & FILTER
+         ========================================================= -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        Search & Filter Bills
+                    </h5>
+
+                    <small class="text-muted">
+                        Find bills by guest, room, payment status or date.
+                    </small>
+
+                </div>
+
+                <span class="badge bg-light text-dark border">
+                    @totalItems bill@(totalItems == 1 ? "" : "s")
+                </span>
+
+            </div>
+
+
+            <form asp-action="Index"
+                  method="get">
+
+                <div class="row g-3">
+
+                    <!-- SEARCH -->
+
+                    <div class="col-lg-4 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Search
+                        </label>
+
+                        <input type="text"
+                               name="search"
+                               value="@search"
+                               class="form-control"
+                               placeholder="Guest name or room number" />
+
+                    </div>
+
+
+                    <!-- PAYMENT STATUS -->
+
+                    <div class="col-lg-3 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Payment Status
+                        </label>
+
+                        <select name="paymentStatus"
+                                class="form-select">
+
+                            <option value="">
+                                All Payments
+                            </option>
+
+                            <option value="Paid"
+                                    selected="@(paymentStatus == "Paid")">
+                                Paid
+                            </option>
+
+                            <option value="Unpaid"
+                                    selected="@(paymentStatus == "Unpaid")">
+                                Unpaid
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- SORT -->
+
+                    <div class="col-lg-3 col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Sort By
+                        </label>
+
+                        <select name="sortOrder"
+                                class="form-select">
+
+                            <option value=""
+                                    selected="@(string.IsNullOrEmpty(sortOrder))">
+                                Newest Bills
+                            </option>
+
+                            <option value="oldest"
+                                    selected="@(sortOrder == "oldest")">
+                                Oldest Bills
+                            </option>
+
+                            <option value="customer_asc"
+                                    selected="@(sortOrder == "customer_asc")">
+                                Guest A-Z
+                            </option>
+
+                            <option value="customer_desc"
+                                    selected="@(sortOrder == "customer_desc")">
+                                Guest Z-A
+                            </option>
+
+                            <option value="room_asc"
+                                    selected="@(sortOrder == "room_asc")">
+                                Room A-Z
+                            </option>
+
+                            <option value="room_desc"
+                                    selected="@(sortOrder == "room_desc")">
+                                Room Z-A
+                            </option>
+
+                            <option value="amount_asc"
+                                    selected="@(sortOrder == "amount_asc")">
+                                Amount Low-High
+                            </option>
+
+                            <option value="amount_desc"
+                                    selected="@(sortOrder == "amount_desc")">
+                                Amount High-Low
+                            </option>
+
+                            <option value="date_asc"
+                                    selected="@(sortOrder == "date_asc")">
+                                Bill Date Earliest
+                            </option>
+
+                            <option value="date_desc"
+                                    selected="@(sortOrder == "date_desc")">
+                                Bill Date Latest
+                            </option>
+
+                            <option value="paid_first"
+                                    selected="@(sortOrder == "paid_first")">
+                                Paid First
+                            </option>
+
+                            <option value="unpaid_first"
+                                    selected="@(sortOrder == "unpaid_first")">
+                                Unpaid First
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- BUTTONS -->
+
+                    <div class="col-lg-2 col-md-6 d-flex align-items-end">
+
+                        <div class="d-flex gap-2 w-100">
+
+                            <button type="submit"
+                                    class="btn btn-primary flex-grow-1">
+
+                                Search
+
+                            </button>
+
+                            <a asp-action="Index"
+                               class="btn btn-outline-secondary">
+
+                                Reset
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DATE FILTER -->
+
+                <hr class="my-4" />
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Bill Date From
+                        </label>
+
+                        <input type="date"
+                               name="billDateFrom"
+                               value="@(billDateFrom?.ToString("yyyy-MM-dd"))"
+                               class="form-control" />
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Bill Date To
+                        </label>
+
+                        <input type="date"
+                               name="billDateTo"
+                               value="@(billDateTo?.ToString("yyyy-MM-dd"))"
+                               class="form-control" />
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         BILLS TABLE
+         ========================================================= -->
 
     @if (Model == null || !Model.Any())
     {
         <div class="card border-0 shadow-sm">
+
             <div class="card-body text-center py-5">
 
-                <div class="display-4 mb-3">💳</div>
+                <div class="display-4 mb-3">
+                    💳
+                </div>
 
-                <h4>No Bills Found</h4>
+                <h4>
+                    No Bills Found
+                </h4>
 
                 <p class="text-muted">
-                    No bills have been created yet.
+                    No bills match your current search or filters.
                 </p>
 
-                <a asp-action="Create"
-                   class="btn btn-primary">
-                    Create First Bill
-                </a>
+                <div class="d-flex justify-content-center gap-2">
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+
+                        Clear Filters
+
+                    </a>
+
+                    <a asp-action="Create"
+                       class="btn btn-primary">
+
+                        Create Bill
+
+                    </a>
+
+                </div>
 
             </div>
+
         </div>
     }
     else
@@ -73,16 +368,39 @@
                         <thead class="table-light">
 
                             <tr>
-                                <th>Bill #</th>
-                                <th>Guest</th>
-                                <th>Room</th>
-                                <th>Bill Date</th>
-                                <th>Total Amount</th>
-                                <th>Payment Status</th>
-                                <th class="text-end">Actions</th>
+
+                                <th>
+                                    Bill #
+                                </th>
+
+                                <th>
+                                    Guest
+                                </th>
+
+                                <th>
+                                    Room
+                                </th>
+
+                                <th>
+                                    Bill Date
+                                </th>
+
+                                <th>
+                                    Total Amount
+                                </th>
+
+                                <th>
+                                    Payment Status
+                                </th>
+
+                                <th class="text-end">
+                                    Actions
+                                </th>
+
                             </tr>
 
                         </thead>
+
 
                         <tbody>
 
@@ -90,31 +408,89 @@
                             {
                                 <tr>
 
+                                    <!-- BILL NUMBER -->
+
                                     <td>
+
                                         <strong>
                                             #@bill.Id
                                         </strong>
+
+                                        <div class="small text-muted">
+                                            Booking #@bill.BookingId
+                                        </div>
+
                                     </td>
 
-                                    <td>
-                                        @(bill.Booking?.Customer?.FullName
-                                            ?? "N/A")
-                                    </td>
+
+                                    <!-- GUEST -->
 
                                     <td>
-                                        @(bill.Booking?.Room?.RoomNumber
-                                            ?? "N/A")
+
+                                        <div class="fw-semibold">
+
+                                            @(bill.Booking?.Customer?.FullName
+                                                ?? "N/A")
+
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(
+                                            bill.Booking?.Customer?.Phone))
+                                        {
+                                            <small class="text-muted">
+
+                                                @bill.Booking.Customer.Phone
+
+                                            </small>
+                                        }
+
                                     </td>
 
-                                    <td>
-                                        @bill.BillDate.ToString("dd MMM yyyy")
-                                    </td>
+
+                                    <!-- ROOM -->
 
                                     <td>
+
+                                        <span class="fw-semibold">
+
+                                            Room
+                                            @(bill.Booking?.Room?.RoomNumber
+                                                ?? "N/A")
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- BILL DATE -->
+
+                                    <td>
+
+                                        @bill.BillDate.ToString(
+                                            "dd MMM yyyy")
+
+                                        <div class="small text-muted">
+
+                                            @bill.BillDate.ToString(
+                                                "hh:mm tt")
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- TOTAL -->
+
+                                    <td>
+
                                         <strong>
                                             Rs. @bill.TotalAmount.ToString("N2")
                                         </strong>
+
                                     </td>
+
+
+                                    <!-- PAYMENT STATUS -->
 
                                     <td>
 
@@ -133,13 +509,22 @@
 
                                     </td>
 
+
+                                    <!-- ACTIONS -->
+
                                     <td class="text-end">
 
-                                        <a asp-action="Details"
-                                           asp-route-id="@bill.Id"
-                                           class="btn btn-sm btn-outline-primary">
-                                            View
-                                        </a>
+                                        <div class="d-flex justify-content-end gap-1">
+
+                                            <a asp-action="Details"
+                                               asp-route-id="@bill.Id"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                                View
+
+                                            </a>
+
+                                        </div>
 
                                     </td>
 
@@ -151,6 +536,137 @@
                     </table>
 
                 </div>
+
+
+                <!-- =================================================
+                     PAGINATION
+                     ================================================= -->
+
+                @if (totalPages > 1)
+                {
+                    <div class="d-flex justify-content-between align-items-center p-3 border-top flex-wrap gap-3">
+
+                        <div class="text-muted small">
+
+                            Showing page
+                            <strong>@currentPage</strong>
+                            of
+                            <strong>@totalPages</strong>
+
+                        </div>
+
+
+                        <nav aria-label="Bills pagination">
+
+                            <ul class="pagination mb-0">
+
+                                <!-- PREVIOUS -->
+
+                                @if (currentPage > 1)
+                                {
+                                    <li class="page-item">
+
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-search="@search"
+                                           asp-route-paymentStatus="@paymentStatus"
+                                           asp-route-billDateFrom="@billDateFrom"
+                                           asp-route-billDateTo="@billDateTo"
+                                           asp-route-sortOrder="@sortOrder"
+                                           asp-route-page="@(currentPage - 1)">
+
+                                            Previous
+
+                                        </a>
+
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="page-item disabled">
+
+                                        <span class="page-link">
+                                            Previous
+                                        </span>
+
+                                    </li>
+                                }
+
+
+                                <!-- PAGE NUMBERS -->
+
+                                @for (int i = 1; i <= totalPages; i++)
+                                {
+                                    if (i == currentPage)
+                                    {
+                                        <li class="page-item active">
+
+                                            <span class="page-link">
+                                                @i
+                                            </span>
+
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="page-item">
+
+                                            <a class="page-link"
+                                               asp-action="Index"
+                                               asp-route-search="@search"
+                                               asp-route-paymentStatus="@paymentStatus"
+                                               asp-route-billDateFrom="@billDateFrom"
+                                               asp-route-billDateTo="@billDateTo"
+                                               asp-route-sortOrder="@sortOrder"
+                                               asp-route-page="@i">
+
+                                                @i
+
+                                            </a>
+
+                                        </li>
+                                    }
+                                }
+
+
+                                <!-- NEXT -->
+
+                                @if (currentPage < totalPages)
+                                {
+                                    <li class="page-item">
+
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-search="@search"
+                                           asp-route-paymentStatus="@paymentStatus"
+                                           asp-route-billDateFrom="@billDateFrom"
+                                           asp-route-billDateTo="@billDateTo"
+                                           asp-route-sortOrder="@sortOrder"
+                                           asp-route-page="@(currentPage + 1)">
+
+                                            Next
+
+                                        </a>
+
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="page-item disabled">
+
+                                        <span class="page-link">
+                                            Next
+                                        </span>
+
+                                    </li>
+                                }
+
+                            </ul>
+
+                        </nav>
+
+                    </div>
+                }
 
             </div>
 

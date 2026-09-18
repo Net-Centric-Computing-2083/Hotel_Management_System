@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using HotelManagementSystem.Models;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HotelManagementSystem.Controllers
 {
@@ -11,20 +9,146 @@ namespace HotelManagementSystem.Controllers
     {
         private readonly ApplicationDbContext _context;
 
+        private const int PageSize = 6;
+
         public RoomsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Rooms
-        public async Task<IActionResult> Index()
-        {
-            var rooms = _context.Rooms
-                .Include(r => r.RoomType)
-                .OrderBy(r => r.RoomNumber);
+        // =========================================================
+        // INDEX - ROOMS
+        // Pagination + Sorting + Filtering
+        // =========================================================
 
-            return View(await rooms.ToListAsync());
+        // GET: Rooms
+        public async Task<IActionResult> Index(
+            string? search,
+            int? roomTypeId,
+            string? availability,
+            string? sortOrder,
+            int page = 1)
+        {
+            if (page < 1)
+                page = 1;
+
+            // Start with all rooms
+            var query = _context.Rooms
+                .Include(r => r.RoomType)
+                .AsQueryable();
+
+            // ---------------------------------------------------------
+            // SEARCH BY ROOM NUMBER
+            // ---------------------------------------------------------
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(r =>
+                    r.RoomNumber != null &&
+                    r.RoomNumber.Contains(search));
+            }
+
+            // ---------------------------------------------------------
+            // FILTER BY ROOM TYPE
+            // ---------------------------------------------------------
+
+            if (roomTypeId.HasValue)
+            {
+                query = query.Where(r =>
+                    r.RoomTypeId == roomTypeId.Value);
+            }
+
+            // ---------------------------------------------------------
+            // FILTER BY CURRENT AVAILABILITY
+            // ---------------------------------------------------------
+
+            if (!string.IsNullOrWhiteSpace(availability))
+            {
+                if (availability.Equals(
+                    "available",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(r => r.IsAvailable);
+                }
+                else if (availability.Equals(
+                    "unavailable",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(r => !r.IsAvailable);
+                }
+            }
+
+            // ---------------------------------------------------------
+            // SORTING
+            // ---------------------------------------------------------
+
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.CurrentSearch = search;
+            ViewBag.CurrentRoomType = roomTypeId;
+            ViewBag.CurrentAvailability = availability;
+
+            query = sortOrder switch
+            {
+                "room_desc" =>
+                    query.OrderByDescending(r => r.RoomNumber),
+
+                "price_asc" =>
+                    query.OrderBy(r => r.Price),
+
+                "price_desc" =>
+                    query.OrderByDescending(r => r.Price),
+
+                "type_asc" =>
+                    query.OrderBy(r => r.RoomType!.Name)
+                         .ThenBy(r => r.RoomNumber),
+
+                "type_desc" =>
+                    query.OrderByDescending(r => r.RoomType!.Name)
+                         .ThenBy(r => r.RoomNumber),
+
+                "availability" =>
+                    query.OrderByDescending(r => r.IsAvailable)
+                         .ThenBy(r => r.RoomNumber),
+
+                _ =>
+                    query.OrderBy(r => r.RoomNumber)
+            };
+
+            // ---------------------------------------------------------
+            // PAGINATION
+            // ---------------------------------------------------------
+
+            var totalRooms = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(
+                totalRooms / (double)PageSize);
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            var rooms = await query
+                .Skip((page - 1) * PageSize)
+                .Take(PageSize)
+                .ToListAsync();
+
+            // ---------------------------------------------------------
+            // DATA FOR FILTER DROPDOWNS
+            // ---------------------------------------------------------
+
+            ViewBag.RoomTypes = await _context.RoomTypes
+                .OrderBy(rt => rt.Name)
+                .ToListAsync();
+
+            // Pagination information
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalRooms = totalRooms;
+
+            return View(rooms);
         }
+
 
         // =========================================================
         // FILTER ROOMS BY DATE
@@ -34,51 +158,163 @@ namespace HotelManagementSystem.Controllers
         [HttpGet]
         public async Task<IActionResult> Filter(
             DateOnly? checkInDate,
-            DateOnly? checkOutDate)
+            DateOnly? checkOutDate,
+            string? search,
+            int? roomTypeId,
+            string? availability,
+            string? sortOrder,
+            int page = 1)
         {
-            // If no dates are provided, show all rooms
-            if (!checkInDate.HasValue || !checkOutDate.HasValue)
-            {
-                var allRooms = await _context.Rooms
-                    .Include(r => r.RoomType)
-                    .OrderBy(r => r.RoomNumber)
-                    .ToListAsync();
+            if (page < 1)
+                page = 1;
 
-                return View("Index", allRooms);
+            // ---------------------------------------------------------
+            // Validate dates
+            // ---------------------------------------------------------
+
+            if (!checkInDate.HasValue ||
+                !checkOutDate.HasValue)
+            {
+                return RedirectToAction(nameof(Index), new
+                {
+                    search,
+                    roomTypeId,
+                    availability,
+                    sortOrder,
+                    page
+                });
             }
 
-            // Validate dates
             if (checkInDate.Value >= checkOutDate.Value)
             {
                 TempData["Error"] =
                     "Check-out date must be after check-in date.";
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new
+                {
+                    search,
+                    roomTypeId,
+                    availability,
+                    sortOrder,
+                    page
+                });
             }
 
-            // Find rooms that:
-            // 1. Are marked as physically available
-            // 2. Do NOT have a booking overlapping the requested dates
+            // ---------------------------------------------------------
+            // Find rooms available for selected dates
+            // ---------------------------------------------------------
 
-            var availableRooms = await _context.Rooms
+            var query = _context.Rooms
                 .Include(r => r.RoomType)
                 .Where(r =>
+                    // Room must be physically available
                     r.IsAvailable &&
+
+                    // No booking overlaps requested dates
                     !_context.Bookings.Any(b =>
                         b.RoomId == r.RoomId &&
                         b.CheckInDate < checkOutDate.Value &&
                         b.CheckOutDate > checkInDate.Value
                     )
                 )
-                .OrderBy(r => r.RoomNumber)
+                .AsQueryable();
+
+            // ---------------------------------------------------------
+            // Additional search
+            // ---------------------------------------------------------
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(r =>
+                    r.RoomNumber != null &&
+                    r.RoomNumber.Contains(search));
+            }
+
+            // ---------------------------------------------------------
+            // Room type filter
+            // ---------------------------------------------------------
+
+            if (roomTypeId.HasValue)
+            {
+                query = query.Where(r =>
+                    r.RoomTypeId == roomTypeId.Value);
+            }
+
+            // ---------------------------------------------------------
+            // Sorting
+            // ---------------------------------------------------------
+
+            query = sortOrder switch
+            {
+                "room_desc" =>
+                    query.OrderByDescending(r => r.RoomNumber),
+
+                "price_asc" =>
+                    query.OrderBy(r => r.Price),
+
+                "price_desc" =>
+                    query.OrderByDescending(r => r.Price),
+
+                "type_asc" =>
+                    query.OrderBy(r => r.RoomType!.Name)
+                         .ThenBy(r => r.RoomNumber),
+
+                "type_desc" =>
+                    query.OrderByDescending(r => r.RoomType!.Name)
+                         .ThenBy(r => r.RoomNumber),
+
+                _ =>
+                    query.OrderBy(r => r.RoomNumber)
+            };
+
+            // ---------------------------------------------------------
+            // Pagination
+            // ---------------------------------------------------------
+
+            var totalRooms = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(
+                totalRooms / (double)PageSize);
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            var rooms = await query
+                .Skip((page - 1) * PageSize)
+                .Take(PageSize)
+                .ToListAsync();
+
+            // ---------------------------------------------------------
+            // ViewBag data
+            // ---------------------------------------------------------
+
+            ViewBag.RoomTypes = await _context.RoomTypes
+                .OrderBy(rt => rt.Name)
                 .ToListAsync();
 
             ViewBag.Filtered = true;
+
             ViewBag.CheckInDate = checkInDate.Value;
             ViewBag.CheckOutDate = checkOutDate.Value;
 
-            return View("Index", availableRooms);
+            ViewBag.CurrentSearch = search;
+            ViewBag.CurrentRoomType = roomTypeId;
+            ViewBag.CurrentAvailability = availability;
+            ViewBag.CurrentSort = sortOrder;
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalRooms = totalRooms;
+
+            return View("Index", rooms);
         }
+
+
+        // =========================================================
+        // CREATE
+        // =========================================================
 
         // GET: Rooms/Create
         public IActionResult Create()
@@ -92,6 +328,7 @@ namespace HotelManagementSystem.Controllers
             return View();
         }
 
+
         // POST: Rooms/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -100,9 +337,11 @@ namespace HotelManagementSystem.Controllers
             if (ModelState.IsValid)
             {
                 _context.Add(room);
+
                 await _context.SaveChangesAsync();
 
-                TempData["Success"] = "Room created successfully.";
+                TempData["Success"] =
+                    "Room created successfully.";
 
                 return RedirectToAction(nameof(Index));
             }
@@ -117,13 +356,19 @@ namespace HotelManagementSystem.Controllers
             return View(room);
         }
 
+
+        // =========================================================
+        // EDIT
+        // =========================================================
+
         // GET: Rooms/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
                 return NotFound();
 
-            var room = await _context.Rooms.FindAsync(id);
+            var room = await _context.Rooms
+                .FindAsync(id);
 
             if (room == null)
                 return NotFound();
@@ -138,10 +383,13 @@ namespace HotelManagementSystem.Controllers
             return View(room);
         }
 
+
         // POST: Rooms/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Room room)
+        public async Task<IActionResult> Edit(
+            int id,
+            Room room)
         {
             if (id != room.RoomId)
                 return NotFound();
@@ -154,12 +402,16 @@ namespace HotelManagementSystem.Controllers
 
                     await _context.SaveChangesAsync();
 
-                    TempData["Success"] = "Room updated successfully.";
+                    TempData["Success"] =
+                        "Room updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_context.Rooms.Any(e => e.RoomId == room.RoomId))
+                    if (!_context.Rooms.Any(
+                        e => e.RoomId == room.RoomId))
+                    {
                         return NotFound();
+                    }
 
                     throw;
                 }
@@ -177,6 +429,11 @@ namespace HotelManagementSystem.Controllers
             return View(room);
         }
 
+
+        // =========================================================
+        // DELETE
+        // =========================================================
+
         // GET: Rooms/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -185,7 +442,8 @@ namespace HotelManagementSystem.Controllers
 
             var room = await _context.Rooms
                 .Include(r => r.RoomType)
-                .FirstOrDefaultAsync(m => m.RoomId == id);
+                .FirstOrDefaultAsync(
+                    m => m.RoomId == id);
 
             if (room == null)
                 return NotFound();
@@ -193,19 +451,39 @@ namespace HotelManagementSystem.Controllers
             return View(room);
         }
 
+
         // POST: Rooms/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(
+            int id)
         {
-            var room = await _context.Rooms.FindAsync(id);
+            var room = await _context.Rooms
+                .FirstOrDefaultAsync(r => r.RoomId == id);
 
-            if (room != null)
+            if (room == null)
             {
-                _context.Rooms.Remove(room);
-
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
+
+            // Prevent deletion if the room has bookings
+            var hasBookings = await _context.Bookings
+                .AnyAsync(b => b.RoomId == id);
+
+            if (hasBookings)
+            {
+                TempData["Error"] =
+                    "This room cannot be deleted because it has existing bookings.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.Rooms.Remove(room);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Room deleted successfully.";
 
             return RedirectToAction(nameof(Index));
         }
